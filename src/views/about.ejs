@@ -1,0 +1,41 @@
+<%- include('partials/head', { title }) %>
+<body class="page-<%= pageId %>">
+  <%- include('partials/header') %>
+
+  <main class="container">
+    <section class="page-intro">
+      <h1>About the project</h1>
+      <p>
+        We are building a supportive study companion that makes structured focus sessions feel natural.
+        This iteration is all about defining the visual language and page flow before we add data and
+        interactivity.
+      </p>
+    </section>
+
+    <section class="team-grid">
+      <% teamMembers.forEach((member) => { %>
+        <article class="team-card">
+          <h2><%= member.name %></h2>
+          <p class="team-role"><%= member.role %></p>
+          <p><%= member.blurb %></p>
+        </article>
+      <% }); %>
+    </section>
+
+    <section class="project-goals">
+      <h2>Goals for Deliverable 1</h2>
+      <ul>
+        <li>Establish consistent navigation and page structure with EJS templates.</li>
+        <li>Lay out content blocks that map to the Pomodoro workflow.</li>
+        <li>Create a shared foundation so future features slot into place smoothly.</li>
+      </ul>
+      <p class="supporting-note">
+        Additional documentation lives in <code>docs/</code>, and the README will grow with each
+        iteration’s highlights.
+      </p>
+    </section>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

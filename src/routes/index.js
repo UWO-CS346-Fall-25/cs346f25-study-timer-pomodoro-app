@@ -16,14 +16,13 @@
  */
 
 const express = require('express');
+
 const router = express.Router();
+const indexController = require('../controllers/indexController');
 
-// Import controllers
-// const indexController = require('../controllers/indexController');
-
-// Define routes
-// router.get('/', indexController.getHome);
-
-// dummy comment
+router.get('/', indexController.getHome);
+router.get('/focus', indexController.getFocus);
+router.get('/insights', indexController.getInsights);
+router.get('/about', indexController.getAbout);
 
 module.exports = router;
