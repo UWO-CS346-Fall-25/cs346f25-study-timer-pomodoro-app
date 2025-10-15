@@ -21,17 +21,20 @@
 const featureCards = [
   {
     title: 'Balanced Sessions',
-    description: 'Structure focused work and mindful breaks with preset Pomodoro blocks.',
+    description:
+      'Structure focused work and mindful breaks with preset Pomodoro blocks.',
     icon: '⏱️',
   },
   {
     title: 'Routine Builder',
-    description: 'Plan your study sprints ahead of time with customizable daily templates.',
+    description:
+      'Plan your study sprints ahead of time with customizable daily templates.',
     icon: '🗓️',
   },
   {
     title: 'Momentum Tracking',
-    description: 'Reflect on streaks, completion rates, and energy levels at a glance.',
+    description:
+      'Reflect on streaks, completion rates, and energy levels at a glance.',
     icon: '📈',
   },
 ];
@@ -39,15 +42,17 @@ const featureCards = [
 const workflowSteps = [
   {
     label: 'Plan',
-    details: 'Drag a few study blocks onto your schedule and set an intention for the day.',
+    details:
+      'Drag a few study blocks onto your schedule and set an intention for the day.',
   },
   {
     label: 'Focus',
-    details: 'Start the timer, stay present, and log quick notes between intervals.',
+    details:
+      'Start the timer, stay present, and log quick notes between intervals.',
   },
   {
     label: 'Reflect',
-    details: 'Review completed sessions to adjust tomorrow’s workload with confidence.',
+    details: 'Review completed sessions to adjust workload',
   },
 ];
 
@@ -71,19 +76,10 @@ const reflectionPrompts = [
 
 const teamMembers = [
   {
-    name: 'Ada Lovelace',
-    role: 'Product Vision & Research',
-    blurb: 'Mapping the study flow and gathering insights from peer workflows.',
+    name: 'Ab Emmanuel',
   },
   {
-    name: 'Grace Hopper',
-    role: 'Experience Design',
-    blurb: 'Crafting intuitive layouts and ensuring accessibility from day one.',
-  },
-  {
-    name: 'Katherine Johnson',
-    role: 'Data & Analytics',
-    blurb: 'Designing progress visualizations and meaningful productivity metrics.',
+    name: 'Dasha Coates',
   },
 ];
 
