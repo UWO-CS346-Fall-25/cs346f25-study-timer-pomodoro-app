@@ -3,6 +3,7 @@
 ## Overview
 
 This is a teaching template for building web applications with:
+
 - **Node.js 20**: JavaScript runtime
 - **Express 4**: Web application framework
 - **EJS**: Templating engine
@@ -85,6 +86,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture information.
 ### Code Style
 
 This project uses:
+
 - **ESLint** for JavaScript linting
 - **Prettier** for code formatting
 
@@ -106,6 +108,7 @@ Run `npm run lint` to check for issues and `npm run format` to format your code.
 Migrations are SQL files in `db/migrations/` that create or modify database tables.
 
 To create a new migration:
+
 1. Create a new file: `db/migrations/00X_description.sql`
 2. Write your SQL (CREATE TABLE, ALTER TABLE, etc.)
 3. Run `npm run migrate`
@@ -115,6 +118,7 @@ To create a new migration:
 Seeds are SQL files in `db/seeds/` that populate the database with initial or test data.
 
 To create a new seed:
+
 1. Create a new file: `db/seeds/00X_description.sql`
 2. Write your INSERT statements
 3. Run `npm run seed`
@@ -134,6 +138,7 @@ const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
 ## Contributing
 
 When contributing to this project:
+
 1. Follow the existing code style
 2. Run `npm run lint` before committing
 3. Test your changes thoroughly

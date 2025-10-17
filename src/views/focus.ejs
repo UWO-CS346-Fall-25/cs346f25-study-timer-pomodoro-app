@@ -32,8 +32,10 @@
         <ul>
           <% focusPresets.forEach((preset) => { %>
             <li>
+              <button class="chip"  data-focus="<%= preset.focus %>" data-break="<%= preset.break %>">
               <span class="preset-name"><%= preset.label %></span>
               <span class="preset-details"><%= preset.focus %> / <%= preset.break %> minutes</span>
+              </button>
             </li>
           <% }); %>
         </ul>

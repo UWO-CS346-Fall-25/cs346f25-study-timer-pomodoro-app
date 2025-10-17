@@ -11,11 +11,19 @@
 /* --------------------------------------------- */
 :root {
   --rose-100: #fef9f6;
+  --rose-150: #fff4f4;
   --rose-200: #fcefee;
   --mint-500: #7fd8be;
   --aqua-400: #a1fcdf;
+  --aqua-500: #a9fbe1;
+  --aqua-600: #ceffed;
+  --aqua-800: #a0edd5;
+
+  --gold-250: #ffefda;
+  --gold-200: #feead1;
   --gold-300: #fcd29f;
   --peach-400: #fcab64;
+  --orange-100: #fa9741;
   --navy-900: #1f2a44;
   --navy-700: #324a5f;
   --gray-500: #5d6b75;
@@ -50,7 +58,7 @@ body {
   font-family: var(--font-family);
   line-height: 1.6;
   color: var(--navy-900);
-  background: linear-gradient(180deg, var(--rose-100), var(--white));
+  background: linear-gradient(180deg, var(--gold-200), var(--gold-300));
   min-height: 100vh;
 }
 
@@ -123,7 +131,7 @@ main.container,
 /* Header & Navigation                           */
 /* --------------------------------------------- */
 .site-header {
-  background: rgba(255, 255, 255, 0.85);
+  background-color: var(--gold-250);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(50, 74, 95, 0.08);
   position: sticky;
@@ -205,7 +213,7 @@ main.container,
 }
 
 .button.secondary {
-  background: var(--peach-400);
+  background: var(--orange-100);
   color: var(--navy-900);
 }
 
@@ -234,6 +242,11 @@ main.container,
   transition: var(--transition);
 }
 
+.chip:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
 .chip.active {
   background: var(--aqua-400);
   color: var(--navy-900);
@@ -244,7 +257,11 @@ main.container,
 /* Home: Hero, Features, Workflow                */
 /* --------------------------------------------- */
 .hero {
-  background: linear-gradient(135deg, rgba(127, 216, 190, 0.92), rgba(252, 171, 100, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgb(160, 237, 213),
+    rgba(252, 171, 100, 0.922)
+  );
   border-radius: var(--radius-lg);
   padding: 4rem clamp(1.5rem, 6vw, 4rem);
   color: var(--navy-900);
@@ -290,7 +307,7 @@ main.container,
 }
 
 .feature-card {
-  background: var(--white);
+  background: var(--gold-250);
   border-radius: var(--radius-md);
   padding: 2.2rem 2rem;
   box-shadow: var(--shadow-card);
@@ -304,7 +321,7 @@ main.container,
 }
 
 .workflow {
-  background: var(--white);
+  background: var(--gold-250);
   padding: 3.5rem clamp(1.5rem, 4vw, 3rem);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
@@ -319,7 +336,7 @@ main.container,
 
 .workflow-steps li {
   padding: 1.5rem;
-  background: var(--gray-200);
+  background: var(--rose-100);
   border-radius: var(--radius-md);
   position: relative;
   min-height: 160px;
@@ -340,7 +357,11 @@ main.container,
 .cta-panel {
   margin: 4rem 0 2rem;
   border-radius: var(--radius-lg);
-  background: linear-gradient(120deg, rgba(252, 210, 159, 0.95), rgba(252, 171, 100, 0.95));
+  background: linear-gradient(
+    120deg,
+    rgb(160, 237, 213),
+    rgba(252, 171, 100, 0.95)
+  );
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -368,7 +389,7 @@ main.container,
 }
 
 .timer-card {
-  background: var(--white);
+  background: var(--rose-100);
   border-radius: var(--radius-lg);
   padding: 2.5rem;
   box-shadow: var(--shadow-soft);
@@ -418,6 +439,14 @@ main.container,
   gap: 1rem;
 }
 
+.preset-panel .chip:focus,
+.preset-panel .chip:active {
+  background: var(--aqua-400);
+  color: var(--navy-900);
+  border-color: transparent;
+  outline: none;
+}
+
 .preset-name {
   font-weight: 600;
   color: var(--navy-900);
@@ -441,7 +470,7 @@ main.container,
 }
 
 .schedule-grid article {
-  background: var(--white);
+  background: var(--rose-100);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: 2.4rem 2rem;
@@ -482,7 +511,7 @@ main.container,
 }
 
 .metric-card {
-  background: var(--white);
+  background: var(--rose-100);
   padding: 2.2rem 2rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
@@ -514,7 +543,7 @@ main.container,
 
 .session-history li,
 .prompt-list li {
-  background: var(--white);
+  background: var(--rose-100);
   border-radius: var(--radius-md);
   padding: 1.5rem;
   box-shadow: var(--shadow-card);
@@ -542,7 +571,7 @@ main.container,
 }
 
 .team-card {
-  background: var(--white);
+  background: var(--rose-100);
   border-radius: var(--radius-lg);
   padding: 2rem;
   box-shadow: var(--shadow-card);
@@ -555,7 +584,7 @@ main.container,
 }
 
 .project-goals {
-  background: rgba(252, 210, 159, 0.35);
+  background: var(--gold-200);
   border-radius: var(--radius-lg);
   padding: 2.4rem 2rem;
   box-shadow: var(--shadow-card);
@@ -577,8 +606,8 @@ main.container,
 /* Footer                                        */
 /* --------------------------------------------- */
 .site-footer {
-  background: rgba(255, 255, 255, 0.92);
-  border-top: 1px solid rgba(50, 74, 95, 0.08);
+  background-color: var(--gold-300);
+  border-top: 1px solid rgba(50, 74, 95, 0.15);
   padding: 2rem 0;
 }
 
