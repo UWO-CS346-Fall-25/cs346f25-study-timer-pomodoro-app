@@ -60,12 +60,12 @@ A teaching template for building secure web applications with Node.js, Express, 
 
 The Week 7 HTML/CSS deliverable focuses on the static structure of the FocusFlow study timer. The Express app now serves four EJS pages with shared navigation and footer:
 
-- Home (`/`) – High-level overview of FocusFlow with hero messaging, feature highlights, and workflow steps.
+- Home (``) – High-level overview of FocusFlow with hero messaging, feature highlights, and workflow steps.
 - Focus Sessions (`/focus`) – Static mock of the timer controls, preset selector, and session queue layout.
 - Progress Insights (`/insights`) – Dashboard-style placeholders showing weekly metrics, recent sessions, and reflection prompts.
 - About (`/about`) – Team introduction plus the goals for this deliverable.
 
-All pages share the new FocusFlow color palette and component styles defined in `src/public/css/style.css`. Content remains static by design; JavaScript logic and data integration will arrive later.
+All pages share the new FocusFlow color palette and component styles, including background colors and interactive button states defined in `src/public/css/style.css`. Content remains static by design; JavaScript logic and data integration will arrive later.
 
 ## Project Structure
 
