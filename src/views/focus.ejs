@@ -1,0 +1,81 @@
+<%- include('partials/head', { title }) %>
+<body class="page-<%= pageId %>">
+  <%- include('partials/header') %>
+
+  <main class="container">
+    <section class="page-intro">
+      <h1>Focus sessions planner</h1>
+      <p>
+        Visualize the timer controls and session queue for your upcoming study sprint. Everything here
+        is static for now, giving us a blueprint before wiring in real data.
+      </p>
+    </section>
+
+    <section class="timer-layout">
+      <div class="timer-card">
+        <p class="timer-label">Current interval</p>
+        <div class="timer-display">25:00</div>
+        <div class="timer-controls">
+          <button class="button primary" type="button">Start</button>
+          <button class="button ghost" type="button">Pause</button>
+          <button class="button ghost" type="button">Reset</button>
+        </div>
+        <div class="interval-toggle">
+          <button class="chip active" type="button">Focus</button>
+          <button class="chip" type="button">Break</button>
+          <button class="chip" type="button">Long Break</button>
+        </div>
+      </div>
+
+      <aside class="preset-panel">
+        <h2>Quick presets</h2>
+        <ul>
+          <% focusPresets.forEach((preset) => { %>
+            <li>
+              <button class="chip"  data-focus="<%= preset.focus %>" data-break="<%= preset.break %>">
+              <span class="preset-name"><%= preset.label %></span>
+              <span class="preset-details"><%= preset.focus %> / <%= preset.break %> minutes</span>
+              </button>
+            </li>
+          <% }); %>
+        </ul>
+        <p class="preset-note">
+          Upcoming iterations will let you customize cycles and save your go-to routines.
+        </p>
+      </aside>
+    </section>
+
+    <section class="schedule-grid">
+      <article>
+        <h2>Session queue</h2>
+        <ul class="session-list">
+          <li>
+            <h3>Algorithms Drill</h3>
+            <p>4 × 25 minute focus blocks · Prep data structures exam</p>
+          </li>
+          <li>
+            <h3>UX Research Review</h3>
+            <p>3 × 25 minute focus blocks · Summarize interview highlights</p>
+          </li>
+          <li>
+            <h3>Capstone Planning</h3>
+            <p>2 × 50 minute focus blocks · Outline sprint milestones</p>
+          </li>
+        </ul>
+      </article>
+
+      <article>
+        <h2>Checkpoint checklist</h2>
+        <ul class="checklist">
+          <li>Define your study intention for this block</li>
+          <li>Silence notifications and set ambient sound</li>
+          <li>Jot a quick reflection during each break</li>
+          <li>Log energy level once the cycle wraps</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

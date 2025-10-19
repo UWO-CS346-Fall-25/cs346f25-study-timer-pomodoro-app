@@ -60,10 +60,18 @@ app.use(
 // CSRF protection
 // Note: Apply this after session middleware
 const csrfProtection = csrf({ cookie: false });
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/focus', label: 'Focus Sessions' },
+  { href: '/insights', label: 'Progress Insights' },
+  { href: '/about', label: 'About' },
+];
 
 // Make CSRF token available to all views
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
+  res.locals.navLinks = navLinks;
+  res.locals.currentPath = req.path;
   next();
 });
 
@@ -72,14 +80,8 @@ app.use((req, res, next) => {
 // Example:
 // const indexRouter = require('./routes/index');
 // app.use('/', indexRouter);
-
-// Placeholder home route
-app.get('/', csrfProtection, (req, res) => {
-  res.render('index', {
-    title: 'Home',
-    csrfToken: req.csrfToken(),
-  });
-});
+const indexRouter = require('./routes/index');
+app.use('/', csrfProtection, indexRouter);
 
 // 404 handler
 app.use((req, res) => {

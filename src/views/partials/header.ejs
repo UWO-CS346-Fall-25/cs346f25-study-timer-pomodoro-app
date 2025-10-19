@@ -1,0 +1,15 @@
+<header class="site-header">
+  <nav class="container nav-bar">
+    <a href="/" class="logo">FocusFlow</a>
+    <ul class="nav-links">
+      <% navLinks.forEach((link) => { %>
+        <% const isActive = currentPath === link.href; %>
+        <li>
+          <a href="<%= link.href %>" class="<%= isActive ? 'active' : '' %>">
+            <%= link.label %>
+          </a>
+        </li>
+      <% }); %>
+    </ul>
+  </nav>
+</header>

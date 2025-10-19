@@ -18,14 +18,78 @@
  * GET /
  * Display the home page
  */
+const featureCards = [
+  {
+    title: 'Balanced Sessions',
+    description:
+      'Structure focused work and mindful breaks with preset Pomodoro blocks.',
+    icon: '⏱️',
+  },
+  {
+    title: 'Routine Builder',
+    description:
+      'Plan your study sprints ahead of time with customizable daily templates.',
+    icon: '🗓️',
+  },
+  {
+    title: 'Momentum Tracking',
+    description:
+      'Reflect on streaks, completion rates, and energy levels at a glance.',
+    icon: '📈',
+  },
+];
+
+const workflowSteps = [
+  {
+    label: 'Plan',
+    details:
+      'Drag a few study blocks onto your schedule and set an intention for the day.',
+  },
+  {
+    label: 'Focus',
+    details:
+      'Start the timer, stay present, and log quick notes between intervals.',
+  },
+  {
+    label: 'Reflect',
+    details: 'Review completed sessions to adjust workload',
+  },
+];
+
+const focusPresets = [
+  { label: 'Classic', focus: 25, break: 5 },
+  { label: 'Deep Work', focus: 50, break: 10 },
+  { label: 'Lightning', focus: 15, break: 3 },
+];
+
+const recentSessions = [
+  { name: 'Algorithms Drill', duration: '4 x 25', mood: 'Focused' },
+  { name: 'UX Research Review', duration: '3 x 25', mood: 'Steady' },
+  { name: 'Capstone Planning', duration: '2 x 50', mood: 'Energized' },
+];
+
+const reflectionPrompts = [
+  'What helped you stay on task today?',
+  'Where did you lose momentum and why?',
+  'Which small win are you most proud of?',
+];
+
+const teamMembers = [
+  {
+    name: 'Ab Emmanuel',
+  },
+  {
+    name: 'Dasha Coates',
+  },
+];
+
 exports.getHome = async (req, res, next) => {
   try {
-    // Fetch any data needed for the home page
-    // const data = await SomeModel.findAll();
-
     res.render('index', {
       title: 'Home',
-      // data: data,
+      pageId: 'home',
+      featureCards,
+      workflowSteps,
       csrfToken: req.csrfToken(),
     });
   } catch (error) {
@@ -41,6 +105,35 @@ exports.getAbout = async (req, res, next) => {
   try {
     res.render('about', {
       title: 'About',
+      pageId: 'about',
+      teamMembers,
+      csrfToken: req.csrfToken(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getFocus = async (req, res, next) => {
+  try {
+    res.render('focus', {
+      title: 'Focus Sessions',
+      pageId: 'focus',
+      focusPresets,
+      csrfToken: req.csrfToken(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getInsights = async (req, res, next) => {
+  try {
+    res.render('insights', {
+      title: 'Progress Insights',
+      pageId: 'insights',
+      recentSessions,
+      reflectionPrompts,
       csrfToken: req.csrfToken(),
     });
   } catch (error) {

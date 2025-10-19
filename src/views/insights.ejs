@@ -1,0 +1,61 @@
+<%- include('partials/head', { title }) %>
+<body class="page-<%= pageId %>">
+  <%- include('partials/header') %>
+
+  <main class="container">
+    <section class="page-intro">
+      <h1>Progress insights</h1>
+      <p>
+        Snapshot of what a future dashboard could display once session tracking is live. These static
+        components anchor the layout for the upcoming data integration work.
+      </p>
+    </section>
+
+    <section class="insight-metrics">
+      <article class="metric-card">
+        <h2>Weekly streak</h2>
+        <p class="metric-value">5 days</p>
+        <p class="metric-caption">You’ve stayed on track since Monday—keep the momentum going.</p>
+      </article>
+      <article class="metric-card">
+        <h2>Total focus time</h2>
+        <p class="metric-value">9 hrs 40 min</p>
+        <p class="metric-caption">Across 18 completed intervals this week.</p>
+      </article>
+      <article class="metric-card">
+        <h2>Energy check</h2>
+        <p class="metric-value">Sunny</p>
+        <p class="metric-caption">Today felt energized with clear wins in two major tasks.</p>
+      </article>
+    </section>
+
+    <section class="insight-grid">
+      <article>
+        <h2>Recent sessions</h2>
+        <ul class="session-history">
+          <% recentSessions.forEach((session) => { %>
+            <li>
+              <h3><%= session.name %></h3>
+              <p><%= session.duration %> · <span><%= session.mood %></span></p>
+            </li>
+          <% }); %>
+        </ul>
+      </article>
+
+      <article>
+        <h2>Reflection prompts</h2>
+        <ul class="prompt-list">
+          <% reflectionPrompts.forEach((prompt) => { %>
+            <li><%= prompt %></li>
+          <% }); %>
+        </ul>
+        <p class="prompt-note">
+          These prompts will eventually anchor guided journaling between sessions.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
