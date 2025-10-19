@@ -7,6 +7,8 @@
  * - Static file serving
  * - Routes
  * - Error handling
+ *
+ * Test note: created from feature/test branch to verify PR workflow.
  */
 
 const express = require('express');
