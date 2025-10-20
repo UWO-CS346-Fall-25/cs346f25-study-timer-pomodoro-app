@@ -1,6 +1,6 @@
-# CS346 Semester Project Template
+# FocusFlow Study Timer App
 
-A teaching template for building secure web applications with Node.js, Express, EJS, and PostgreSQL.
+FocusFlow is our CS346 semester project for building a study timer web application with Node.js, Express, EJS, and PostgreSQL.
 
 ## Features
 
@@ -15,8 +15,8 @@ A teaching template for building secure web applications with Node.js, Express, 
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repository-url>
-   cd cs346-semester-project-template
+   git clone https://github.com/UWO-CS346-Fall-25/cs346f25-study-timer-pomodoro-app.git
+   cd cs346f25-study-timer-pomodoro-app
    ```
 
 2. **Install dependencies**
