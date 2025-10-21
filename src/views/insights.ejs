@@ -6,40 +6,49 @@
     <section class="page-intro">
       <h1>Progress insights</h1>
       <p>
-        Snapshot of what a future dashboard could display once session tracking is live. These static
-        components anchor the layout for the upcoming data integration work.
+        Pull real-time highlights from your session queue. As you log more focus blocks, these cards
+        will adapt automatically so you can decide what to schedule next.
       </p>
     </section>
 
     <section class="insight-metrics">
       <article class="metric-card">
         <h2>Weekly streak</h2>
-        <p class="metric-value">5 days</p>
-        <p class="metric-caption">You’ve stayed on track since Monday—keep the momentum going.</p>
+        <p class="metric-value"><%= insights.streakDays %> day<%= insights.streakDays === 1 ? '' : 's' %></p>
+        <p class="metric-caption">Focus blocks logged in the last few days.</p>
       </article>
       <article class="metric-card">
         <h2>Total focus time</h2>
-        <p class="metric-value">9 hrs 40 min</p>
-        <p class="metric-caption">Across 18 completed intervals this week.</p>
+        <p class="metric-value"><%= insights.totalFocusLabel %></p>
+        <p class="metric-caption">
+          Across <%= summary.totalCycles %> completed intervals so far.
+        </p>
       </article>
       <article class="metric-card">
         <h2>Energy check</h2>
-        <p class="metric-value">Sunny</p>
-        <p class="metric-caption">Today felt energized with clear wins in two major tasks.</p>
+        <p class="metric-value"><%= insights.latestMood %></p>
+        <p class="metric-caption">Latest reflection pulled from your focus queue.</p>
       </article>
     </section>
 
     <section class="insight-grid">
       <article>
         <h2>Recent sessions</h2>
-        <ul class="session-history">
-          <% recentSessions.forEach((session) => { %>
-            <li>
-              <h3><%= session.name %></h3>
-              <p><%= session.duration %> · <span><%= session.mood %></span></p>
-            </li>
-          <% }); %>
-        </ul>
+        <% if (recentSessions.length === 0) { %>
+          <p class="empty-state">No sessions logged yet. Add one from the Focus page.</p>
+        <% } else { %>
+          <ul class="session-history" id="insightSessionList">
+            <% recentSessions.forEach((session) => { %>
+              <li data-session-id="<%= session.id %>">
+                <h3><%= session.title %></h3>
+                <p>
+                  <%= session.cycles %> × <%= session.focusMinutes %> minute focus blocks
+                  · <span><%= session.mood %></span>
+                </p>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
       </article>
 
       <article>

@@ -6,10 +6,16 @@
     <section class="page-intro">
       <h1>Focus sessions planner</h1>
       <p>
-        Visualize the timer controls and session queue for your upcoming study sprint. Everything here
-        is static for now, giving us a blueprint before wiring in real data.
+        Draft, launch, and record your upcoming study sprints. Adjust presets, fine-tune intervals, and
+        log completed sessions so the rest of FocusFlow can surface insights.
       </p>
     </section>
+
+    <% if (flash) { %>
+      <div class="alert alert-<%= flash.type %>">
+        <p><%= flash.heading %></p>
+      </div>
+    <% } %>
 
     <section class="timer-layout">
       <div class="timer-card">
@@ -32,9 +38,17 @@
         <ul>
           <% focusPresets.forEach((preset) => { %>
             <li>
-              <button class="chip"  data-focus="<%= preset.focus %>" data-break="<%= preset.break %>">
-              <span class="preset-name"><%= preset.label %></span>
-              <span class="preset-details"><%= preset.focus %> / <%= preset.break %> minutes</span>
+              <button
+                class="chip"
+                data-focus="<%= preset.focus %>"
+                data-break="<%= preset.break %>"
+                data-cycles="<%= preset.cycles %>"
+                type="button"
+              >
+                <span class="preset-name"><%= preset.label %></span>
+                <span class="preset-details">
+                  <%= preset.focus %> / <%= preset.break %> minutes · <%= preset.cycles %> cycles
+                </span>
               </button>
             </li>
           <% }); %>
@@ -48,20 +62,22 @@
     <section class="schedule-grid">
       <article>
         <h2>Session queue</h2>
-        <ul class="session-list">
-          <li>
-            <h3>Algorithms Drill</h3>
-            <p>4 × 25 minute focus blocks · Prep data structures exam</p>
-          </li>
-          <li>
-            <h3>UX Research Review</h3>
-            <p>3 × 25 minute focus blocks · Summarize interview highlights</p>
-          </li>
-          <li>
-            <h3>Capstone Planning</h3>
-            <p>2 × 50 minute focus blocks · Outline sprint milestones</p>
-          </li>
-        </ul>
+        <% if (sessions.length === 0) { %>
+          <p class="empty-state">No sessions queued yet. Use the form to add your first focus block.</p>
+        <% } else { %>
+          <ul class="session-list" id="sessionList">
+            <% sessions.forEach((session) => { %>
+              <li data-session-id="<%= session.id %>">
+                <h3><%= session.title %></h3>
+                <p>
+                  <%= session.cycles %> × <%= session.focusMinutes %> minute focus /
+                  <%= session.breakMinutes %> minute break
+                  · Mood: <span><%= session.mood %></span>
+                </p>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
       </article>
 
       <article>
@@ -71,6 +87,108 @@
           <li>Silence notifications and set ambient sound</li>
           <li>Jot a quick reflection during each break</li>
           <li>Log energy level once the cycle wraps</li>
+        </ul>
+      </article>
+
+      <article>
+        <h2>Add a session to your queue</h2>
+        <form action="/focus/sessions" method="POST" class="session-form" novalidate>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+          <label for="title">Session label</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            maxlength="60"
+            value="<%= formValues.title || '' %>"
+            aria-describedby="titleHelp"
+            required
+          />
+          <p id="titleHelp" class="field-hint">Example: “Discrete math practice set”</p>
+          <% if (formErrors.title) { %>
+            <p class="field-error"><%= formErrors.title %></p>
+          <% } %>
+
+          <div class="form-grid">
+            <div>
+              <label for="focusMinutes">Focus minutes</label>
+              <input
+                type="number"
+                id="focusMinutes"
+                name="focusMinutes"
+                min="10"
+                max="90"
+                value="<%= formValues.focusMinutes || 25 %>"
+                required
+              />
+              <% if (formErrors.focusMinutes) { %>
+                <p class="field-error"><%= formErrors.focusMinutes %></p>
+              <% } %>
+            </div>
+
+            <div>
+              <label for="breakMinutes">Break minutes</label>
+              <input
+                type="number"
+                id="breakMinutes"
+                name="breakMinutes"
+                min="3"
+                max="30"
+                value="<%= formValues.breakMinutes || 5 %>"
+                required
+              />
+              <% if (formErrors.breakMinutes) { %>
+                <p class="field-error"><%= formErrors.breakMinutes %></p>
+              <% } %>
+            </div>
+
+            <div>
+              <label for="cycles">Cycles</label>
+              <input
+                type="number"
+                id="cycles"
+                name="cycles"
+                min="1"
+                max="8"
+                value="<%= formValues.cycles || 4 %>"
+                required
+              />
+              <% if (formErrors.cycles) { %>
+                <p class="field-error"><%= formErrors.cycles %></p>
+              <% } %>
+            </div>
+          </div>
+
+          <label for="mood">How are you feeling?</label>
+          <input
+            type="text"
+            id="mood"
+            name="mood"
+            maxlength="40"
+            value="<%= formValues.mood || '' %>"
+            placeholder="Optional note (e.g., Focused, Calm)"
+          />
+
+          <button class="button primary" type="submit">Add session</button>
+        </form>
+      </article>
+
+      <article>
+        <h2>Today at a glance</h2>
+        <ul class="summary-list" id="sessionSummary">
+          <li>
+            <strong>Total focus minutes:</strong>
+            <span><%= summary.totalFocusMinutes %></span>
+          </li>
+          <li>
+            <strong>Total cycles scheduled:</strong>
+            <span><%= summary.totalCycles %></span>
+          </li>
+          <li>
+            <strong>Average focus block:</strong>
+            <span><%= summary.averageFocusBlock || 0 %> minutes</span>
+          </li>
         </ul>
       </article>
     </section>
