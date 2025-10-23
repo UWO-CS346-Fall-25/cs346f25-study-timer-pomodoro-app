@@ -19,7 +19,8 @@
 
     <section class="timer-layout">
       <div class="timer-card">
-        <p class="timer-label">Current interval</p>
+        <p class="timer-label">Current interval: <%= (focusPresets && focusPresets[0]?.label) || 'Classic' %>
+        </p>
         <div class="timer-display">25:00</div>
         <div class="timer-controls">
           <button class="button primary" type="button">Start</button>
@@ -36,10 +37,10 @@
       <aside class="preset-panel">
         <h2>Quick presets</h2>
         <ul>
-          <% focusPresets.forEach((preset) => { %>
+          <% focusPresets.forEach((preset, i) => { %>
             <li>
               <button
-                class="chip"
+                class="chip <%= i === 0 ? 'active' : '' %>"
                 data-focus="<%= preset.focus %>"
                 data-break="<%= preset.break %>"
                 data-cycles="<%= preset.cycles %>"
@@ -103,6 +104,7 @@
             maxlength="60"
             value="<%= formValues.title || '' %>"
             aria-describedby="titleHelp"
+            class="<%= formErrors.title ? 'error' : '' %>"
             required
           />
           <p id="titleHelp" class="field-hint">Example: “Discrete math practice set”</p>
@@ -120,6 +122,7 @@
                 min="10"
                 max="90"
                 value="<%= formValues.focusMinutes || 25 %>"
+                class="<%= formErrors.focusMinutes ? 'error' : '' %>"
                 required
               />
               <% if (formErrors.focusMinutes) { %>
@@ -136,6 +139,7 @@
                 min="3"
                 max="30"
                 value="<%= formValues.breakMinutes || 5 %>"
+                class="<%= formErrors.breakMinutes ? 'error' : '' %>"
                 required
               />
               <% if (formErrors.breakMinutes) { %>
@@ -152,6 +156,7 @@
                 min="1"
                 max="8"
                 value="<%= formValues.cycles || 4 %>"
+                class="<%= formErrors.cycles ? 'error' : '' %>"
                 required
               />
               <% if (formErrors.cycles) { %>
@@ -195,5 +200,6 @@
   </main>
 
   <%- include('partials/footer') %>
+  <script src="/js/main.js"></script>
 </body>
 </html>

@@ -23,6 +23,8 @@
   --gold-300: #fcd29f;
   --peach-400: #fcab64;
   --orange-100: #fa9741;
+  --red-100: #ff3c00;
+  --red-200: #ff5f2f;
   --navy-900: #1f2a44;
   --navy-700: #324a5f;
   --gray-500: #5d6b75;
@@ -398,12 +400,19 @@ main.container,
 
 .alert-success {
   background: var(--aqua-600);
+  border: 2px solid var(--mint-500);
   color: var(--navy-900);
 }
 
 .alert-error {
   background: rgba(250, 151, 65, 0.18);
   color: var(--orange-100);
+  border: 2px solid var(--red-200);
+}
+
+.alert-success p,
+.alert-error p {
+  text-align: center;
 }
 
 .timer-card {
@@ -548,6 +557,11 @@ main.container,
   border-color: transparent;
 }
 
+.session-form input.error {
+  border: 2px solid red;
+  outline: none;
+}
+
 .form-grid {
   display: grid;
   gap: 1rem;
@@ -562,7 +576,7 @@ main.container,
 
 .field-error {
   font-size: 0.85rem;
-  color: var(--orange-100);
+  color: red;
   margin: -0.2rem 0 0;
 }
 
@@ -761,4 +775,38 @@ main.container,
   .hero {
     padding: 3rem 1.5rem;
   }
+}
+
+body {
+  transition: background 1s ease-in-out;
+}
+
+body.theme-deep {
+  background: linear-gradient(180deg, #d0e8ff, #a7c7e7);
+}
+
+body.theme-lightning {
+  background: linear-gradient(180deg, #ffe5ec, #ffc2d1);
+}
+
+body.theme-classic .site-header,
+body.theme-classic .site-footer {
+  background-color: var(--gold-250);
+}
+
+body.theme-deep .site-header,
+body.theme-deep .site-footer {
+  background-color: #a7c7e7; 
+}
+
+body.theme-lightning .site-header,
+body.theme-lightning .site-footer {
+  background-color: #ffc2d1;
+}
+
+body.theme-deep .site-header a,
+body.theme-deep .site-footer p,
+body.theme-lightning .site-header a,
+body.theme-lightning .site-footer p {
+  color: var(--navy-900);
 }

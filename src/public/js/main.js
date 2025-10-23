@@ -118,6 +118,95 @@ function initInteractiveElements() {
       }
     });
   });
+
+  const body = document.body;
+  const display = document.querySelector('.timer-display');
+  const focusInput = document.getElementById('focusMinutes');
+  const breakInput = document.getElementById('breakMinutes');
+  const cyclesInput = document.getElementById('cycles');
+
+  document.querySelectorAll('.preset-panel .chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      focusInput.value = btn.dataset.focus;
+      breakInput.value = btn.dataset.break;
+      cyclesInput.value = btn.dataset.cycles;
+
+      const m = parseInt(btn.dataset.focus, 10) || 0;
+      display.textContent = String(m).padStart(2, '0') + ':00';
+
+      document
+        .querySelectorAll('.preset-panel .chip')
+        .forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      body.classList.remove('theme-classic', 'theme-deep', 'theme-lightning');
+
+      const label =
+        btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() ||
+        '';
+      if (label.includes('classic')) body.classList.add('theme-classic');
+      else if (label.includes('deep')) body.classList.add('theme-deep');
+      else if (label.includes('lightning'))
+        body.classList.add('theme-lightning');
+
+      const labelEl = document.querySelector('.timer-label');
+      const presetName =
+        btn.querySelector('.preset-name')?.textContent.trim() || 'Custom';
+      labelEl.textContent = `Current interval: ${presetName}`;
+    });
+  });
+
+  const intervalBtns = document.querySelectorAll('.interval-toggle .chip');
+  const [focusBtn, breakBtn, longBreakBtn] = intervalBtns;
+
+  const PRESET_MINUTES = {
+    classic: { focus: 25, break: 5, long: 15 },
+    'deep work': { focus: 50, break: 10, long: 20 },
+    lightning: { focus: 15, break: 3, long: 13 },
+  };
+
+  let currentPreset = 'classic';
+
+  function setTimer(min) {
+    display.textContent = String(min).padStart(2, '0') + ':00';
+  }
+
+  function setActiveInterval(which) {
+    intervalBtns.forEach((b) => b.classList.remove('active'));
+    if (which === 'focus') focusBtn.classList.add('active');
+    if (which === 'break') breakBtn.classList.add('active');
+    if (which === 'long') longBreakBtn.classList.add('active');
+  }
+
+  document.querySelectorAll('.preset-panel .chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const name =
+        btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() ||
+        'classic';
+      currentPreset = name in PRESET_MINUTES ? name : 'classic';
+
+      setTimer(PRESET_MINUTES[currentPreset].focus);
+      setActiveInterval('focus');
+    });
+  });
+
+  focusBtn?.addEventListener('click', () => {
+    setTimer(PRESET_MINUTES[currentPreset].focus);
+    setActiveInterval('focus');
+  });
+
+  breakBtn?.addEventListener('click', () => {
+    setTimer(PRESET_MINUTES[currentPreset].break);
+    setActiveInterval('break');
+  });
+
+  longBreakBtn?.addEventListener('click', () => {
+    setTimer(PRESET_MINUTES[currentPreset].long);
+    setActiveInterval('long');
+  });
+
+  setTimer(PRESET_MINUTES[currentPreset].focus);
+  setActiveInterval('focus');
 }
 
 /**
