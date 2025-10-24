@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 /* eslint-env browser, es2021*/
 /* global localStorage */
 /**
@@ -216,8 +215,7 @@ function initInteractiveElements() {
 
       const presetNameLc = presetName.toLowerCase();
       let normalized = 'classic';
-      if (presetNameLc.includes('deep'))
-        normalized = 'deep work';
+      if (presetNameLc.includes('deep')) normalized = 'deep work';
       else if (presetNameLc.includes('lightning')) normalized = 'lightning';
       localStorage.setItem(K.mode, 'preset');
       localStorage.setItem(K.preset, normalized);
@@ -235,7 +233,6 @@ function initInteractiveElements() {
   };
 
   let currentPreset = 'classic';
-
   function setTimer(min) {
     display.textContent = String(min).padStart(2, '0') + ':00';
   }
@@ -276,7 +273,6 @@ function initInteractiveElements() {
     setActiveInterval('long');
     localStorage.setItem(K.interval, 'long');
   });
-
   setTimer(PRESET_MINUTES[currentPreset].focus);
   setActiveInterval('focus');
 
@@ -298,10 +294,8 @@ function initInteractiveElements() {
       );
       if (chip) {
         chip.click();
-        if (savedInterval === 'break')
-          breakBtn?.click();
-        else if (savedInterval === 'long')
-          longBreakBtn?.click();
+        if (savedInterval === 'break') breakBtn?.click();
+        else if (savedInterval === 'long') longBreakBtn?.click();
         else focusBtn?.click();
         return true;
       }
@@ -340,7 +334,6 @@ function initInteractiveElements() {
       localStorage.getItem(K.preset) || 'classic'
     ).toLowerCase();
     if (!selectPresetChip(savedPreset)) {
-
       setActiveInterval(savedInterval);
     }
   })();
@@ -391,13 +384,57 @@ function initInteractiveElements() {
       if (timerLabel) timerLabel.textContent = `Current interval: ${title}`;
 
       setFocusActive();
-
       presetChips.forEach((chip) => chip.classList.remove('active'));
 
       list
         .querySelectorAll('.queue-item')
         .forEach((q) => q.classList.remove('is-selected'));
       btn.classList.add('is-selected');
+
+      localStorage.setItem(K.mode, 'custom');
+      localStorage.setItem(K.interval, 'focus');
+      localStorage.setItem(
+        K.custom,
+        JSON.stringify({ title, focus: focusM, break: breakM, cycles })
+      );
+    });
+  })();
+
+  (function wireAddSessionForm() {
+    const form =
+      document.getElementById('addSessionForm') ||
+      document.querySelector('form[data-validate]');
+    if (!form) return;
+
+    form.addEventListener('submit', function () {
+      if (!validateForm(form)) return;
+
+      const title =
+        (form.querySelector('#title')?.value || 'Session').trim() || 'Session';
+      const focusM =
+        parseInt(form.querySelector('#focusMinutes')?.value, 10) || 25;
+      const breakM =
+        parseInt(form.querySelector('#breakMinutes')?.value, 10) || 5;
+      const cycles = parseInt(form.querySelector('#cycles')?.value, 10) || 1;
+
+      const labelEl =
+        document.getElementById('timerLabel') ||
+        document.querySelector('.timer-label');
+      const displayEl =
+        document.getElementById('timerDisplay') ||
+        document.querySelector('.timer-display');
+
+      if (labelEl) labelEl.textContent = `Current interval: ${title}`;
+      if (displayEl)
+        displayEl.textContent = String(focusM).padStart(2, '0') + ':00';
+
+      const chipFocus = document.getElementById('chipFocus');
+      const chipBreak = document.getElementById('chipBreak');
+      const chipLong = document.getElementById('chipLong');
+      [chipFocus, chipBreak, chipLong].forEach((b) =>
+        b?.classList.remove('active')
+      );
+      chipFocus?.classList.add('active');
 
       localStorage.setItem(K.mode, 'custom');
       localStorage.setItem(K.interval, 'focus');
