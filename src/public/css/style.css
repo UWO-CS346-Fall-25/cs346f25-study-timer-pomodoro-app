@@ -592,6 +592,41 @@ main.container,
   font-size: 0.95rem;
 }
 
+.session-list li {
+  padding: 0;
+} 
+
+.session-list .queue-item {
+  width: 100%;
+  text-align: left;
+  background: var(--white);
+  border: 1px solid rgba(31, 42, 68, 0.18);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-card);
+}
+
+.session-list .queue-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+
+.session-list .queue-item:active {
+  transform: translateY(0);
+}
+
+.session-list .queue-item:focus {
+  outline: 2px solid var(--aqua-400);
+  outline-offset: 2px;
+}
+
+.session-list .queue-item.is-selected {
+  border-color: var(--mint-500);
+  box-shadow: 0 0 0 3px rgba(127, 216, 190, 0.25);
+}
+
 /* --------------------------------------------- */
 /* Insights Page                                 */
 /* --------------------------------------------- */
@@ -796,7 +831,7 @@ body.theme-classic .site-footer {
 
 body.theme-deep .site-header,
 body.theme-deep .site-footer {
-  background-color: #a7c7e7; 
+  background-color: #a7c7e7;
 }
 
 body.theme-lightning .site-header,

@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 
 const sessions = [
-  {
+  /*{
     id: crypto.randomUUID(),
     title: 'Algorithms Drill',
     focusMinutes: 25,
@@ -27,7 +27,7 @@ const sessions = [
     cycles: 2,
     mood: 'Energized',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
-  },
+  },*/
 ];
 
 const MAX_SESSIONS = 20;
@@ -89,7 +89,10 @@ function addSession(input) {
     sessions.shift();
   }
 
-  return { ok: true, session: { ...newSession, createdAt: newSession.createdAt.toISOString() } };
+  return {
+    ok: true,
+    session: { ...newSession, createdAt: newSession.createdAt.toISOString() },
+  };
 }
 
 function getSummary() {

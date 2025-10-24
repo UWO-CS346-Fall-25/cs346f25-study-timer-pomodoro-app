@@ -149,6 +149,10 @@ function initInteractiveElements() {
       else if (label.includes('lightning'))
         body.classList.add('theme-lightning');
 
+      document.querySelectorAll('.queue-item').forEach((item) => {
+        item.classList.remove('is-selected');
+      });
+
       const labelEl = document.querySelector('.timer-label');
       const presetName =
         btn.querySelector('.preset-name')?.textContent.trim() || 'Custom';
@@ -207,6 +211,62 @@ function initInteractiveElements() {
 
   setTimer(PRESET_MINUTES[currentPreset].focus);
   setActiveInterval('focus');
+
+  (function wireQueueClicks() {
+    const list = document.getElementById('sessionList');
+    if (!list) return;
+
+    const timerLabel = document.getElementById('timerLabel');
+    const timerDisplay = document.getElementById('timerDisplay');
+
+    const focusInput = document.getElementById('focusMinutes');
+    const breakInput = document.getElementById('breakMinutes');
+    const cyclesInput = document.getElementById('cycles');
+
+    const chipFocus = document.getElementById('chipFocus');
+    const chipBreak = document.getElementById('chipBreak');
+    const chipLong = document.getElementById('chipLong');
+
+    const presetChips = document.querySelectorAll('.preset-panel .chip');
+
+    function setFocusActive() {
+      [chipFocus, chipBreak, chipLong].forEach((b) =>
+        b?.classList.remove('active')
+      );
+      chipFocus?.classList.add('active');
+    }
+
+    function toMMSS(mins) {
+      const m = String(mins).padStart(2, '0');
+      return `${m}:00`;
+    }
+
+    list.addEventListener('click', (e) => {
+      const btn = e.target.closest('.queue-item');
+      if (!btn) return;
+
+      const title = btn.dataset.title || 'Session';
+      const focusM = parseInt(btn.dataset.focus || '25', 10);
+      const breakM = parseInt(btn.dataset.break || '5', 10);
+      const cycles = parseInt(btn.dataset.cycles || '1', 10);
+
+      if (focusInput) focusInput.value = focusM;
+      if (breakInput) breakInput.value = breakM;
+      if (cyclesInput) cyclesInput.value = cycles;
+
+      if (timerDisplay) timerDisplay.textContent = toMMSS(focusM);
+      if (timerLabel) timerLabel.textContent = `Current interval: ${title}`;
+
+      setFocusActive();
+
+      presetChips.forEach((chip) => chip.classList.remove('active'));
+
+      list
+        .querySelectorAll('.queue-item')
+        .forEach((q) => q.classList.remove('is-selected'));
+      btn.classList.add('is-selected');
+    });
+  })();
 }
 
 /**

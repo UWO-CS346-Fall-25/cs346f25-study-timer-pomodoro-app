@@ -14,7 +14,7 @@
 - **Dasha (client experience)**
   - Write front-end JS to wire preset buttons, form validation, and live updates.
   - Show inline success/error states and keep everything keyboard friendly.
-  - Polish styling/animations so the new interactions feel smooth.
+  - Polish styling/animations so the new interactions feel smooth. 
 - **Together**
   - Agree on the session object shape (`title`, `focusMinutes`, `breakMinutes`, `cycles`, `mood`).
   - Capture screenshots or a 60s clip for the PR.

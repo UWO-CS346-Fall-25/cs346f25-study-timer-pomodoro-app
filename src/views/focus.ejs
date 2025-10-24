@@ -19,18 +19,18 @@
 
     <section class="timer-layout">
       <div class="timer-card">
-        <p class="timer-label">Current interval: <%= (focusPresets && focusPresets[0]?.label) || 'Classic' %>
+        <p class="timer-label" id="timerLabel">Current interval: <%= (focusPresets && focusPresets[0]?.label) || 'Classic' %>
         </p>
-        <div class="timer-display">25:00</div>
+        <div class="timer-display" id="timerDisplay">25:00</div>
         <div class="timer-controls">
           <button class="button primary" type="button">Start</button>
           <button class="button ghost" type="button">Pause</button>
           <button class="button ghost" type="button">Reset</button>
         </div>
         <div class="interval-toggle">
-          <button class="chip active" type="button">Focus</button>
-          <button class="chip" type="button">Break</button>
-          <button class="chip" type="button">Long Break</button>
+          <button class="chip active" id="chipFocus" type="button">Focus</button>
+          <button class="chip" id="chipBreak" type="button">Break</button>
+          <button class="chip" id="chipLong" type="button">Long Break</button>
         </div>
       </div>
 
@@ -69,12 +69,21 @@
           <ul class="session-list" id="sessionList">
             <% sessions.forEach((session) => { %>
               <li data-session-id="<%= session.id %>">
-                <h3><%= session.title %></h3>
-                <p>
-                  <%= session.cycles %> × <%= session.focusMinutes %> minute focus /
-                  <%= session.breakMinutes %> minute break
-                  · Mood: <span><%= session.mood %></span>
-                </p>
+                <button
+                  type="button"
+                  class="queue-item"
+                  data-title="<%= session.title %>"
+                  data-focus="<%= session.focusMinutes %>"
+                  data-break="<%= session.breakMinutes %>"
+                  data-cycles="<%= session.cycles %>"
+                >
+                  <h3><%= session.title %></h3>
+                  <p>
+                    <%= session.cycles %> × <%= session.focusMinutes %> minute focus /
+                    <%= session.breakMinutes %> minute break · Mood:
+                    <span><%= session.mood %></span>
+                  </p>
+                </button>
               </li>
             <% }); %>
           </ul>
