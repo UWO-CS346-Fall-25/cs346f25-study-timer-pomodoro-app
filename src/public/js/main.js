@@ -1,3 +1,8 @@
+/* eslint-disable no-undef */
+/* eslint-env browser, es2021*/
+/* global localStorage */
+/**
+
 /**
  * Main JavaScript File
  *
@@ -31,7 +36,7 @@ function initFormValidation() {
   forms.forEach((form) => {
     form.addEventListener('submit', function (e) {
       if (!validateForm(form)) {
-        e.preventDefault();
+        //e.preventDefault();
       }
     });
   });
@@ -54,6 +59,50 @@ function validateForm(form) {
       clearError(field);
     }
   });
+
+  const title = form.querySelector('#title');
+  const focus = form.querySelector('#focusMinutes');
+  const brk = form.querySelector('#breakMinutes');
+  const cycles = form.querySelector('#cycles');
+
+  if (title && title.value.trim().length > 60) {
+    showError(title, 'Title must be 60 characters or fewer');
+    isValid = false;
+  } else if (title) {
+    clearError(title);
+  }
+
+  const asInt = (el) => parseInt(el && el.value, 10);
+
+  if (focus) {
+    const n = asInt(focus);
+    if (Number.isNaN(n) || n < 10 || n > 90) {
+      showError(focus, 'Focus minutes must be between 10 and 90');
+      isValid = false;
+    } else {
+      clearError(focus);
+    }
+  }
+
+  if (brk) {
+    const n = asInt(brk);
+    if (Number.isNaN(n) || n < 3 || n > 30) {
+      showError(brk, 'Break minutes must be between 3 and 30');
+      isValid = false;
+    } else {
+      clearError(brk);
+    }
+  }
+
+  if (cycles) {
+    const n = asInt(cycles);
+    if (Number.isNaN(n) || n < 1 || n > 8) {
+      showError(cycles, 'Cycles must be between 1 and 8');
+      isValid = false;
+    } else {
+      clearError(cycles);
+    }
+  }
 
   return isValid;
 }
@@ -125,6 +174,13 @@ function initInteractiveElements() {
   const breakInput = document.getElementById('breakMinutes');
   const cyclesInput = document.getElementById('cycles');
 
+  const K = {
+    mode: 'ffMode',
+    preset: 'ffPreset',
+    interval: 'ffInterval',
+    custom: 'ffCustom',
+  };
+
   document.querySelectorAll('.preset-panel .chip').forEach((btn) => {
     btn.addEventListener('click', () => {
       focusInput.value = btn.dataset.focus;
@@ -157,6 +213,15 @@ function initInteractiveElements() {
       const presetName =
         btn.querySelector('.preset-name')?.textContent.trim() || 'Custom';
       labelEl.textContent = `Current interval: ${presetName}`;
+
+      const presetNameLc = presetName.toLowerCase();
+      let normalized = 'classic';
+      if (presetNameLc.includes('deep'))
+        normalized = 'deep work';
+      else if (presetNameLc.includes('lightning')) normalized = 'lightning';
+      localStorage.setItem(K.mode, 'preset');
+      localStorage.setItem(K.preset, normalized);
+      localStorage.setItem(K.interval, 'focus');
     });
   });
 
@@ -197,20 +262,88 @@ function initInteractiveElements() {
   focusBtn?.addEventListener('click', () => {
     setTimer(PRESET_MINUTES[currentPreset].focus);
     setActiveInterval('focus');
+    localStorage.setItem(K.interval, 'focus');
   });
 
   breakBtn?.addEventListener('click', () => {
     setTimer(PRESET_MINUTES[currentPreset].break);
     setActiveInterval('break');
+    localStorage.setItem(K.interval, 'break');
   });
 
   longBreakBtn?.addEventListener('click', () => {
     setTimer(PRESET_MINUTES[currentPreset].long);
     setActiveInterval('long');
+    localStorage.setItem(K.interval, 'long');
   });
 
   setTimer(PRESET_MINUTES[currentPreset].focus);
   setActiveInterval('focus');
+
+  (function restoreLastState() {
+    const savedMode = localStorage.getItem(K.mode) || 'preset';
+    const savedInterval = localStorage.getItem(K.interval) || 'focus';
+
+    const chips = document.querySelectorAll('.preset-panel .chip');
+    const timerLabel =
+      document.getElementById('timerLabel') ||
+      document.querySelector('.timer-label');
+
+    const selectPresetChip = (name) => {
+      chips.forEach((c) => c.classList.remove('active'));
+      const chip = Array.from(chips).find(
+        (c) =>
+          c.querySelector('.preset-name')?.textContent.trim().toLowerCase() ===
+          name
+      );
+      if (chip) {
+        chip.click();
+        if (savedInterval === 'break')
+          breakBtn?.click();
+        else if (savedInterval === 'long')
+          longBreakBtn?.click();
+        else focusBtn?.click();
+        return true;
+      }
+      return false;
+    };
+
+    if (savedMode === 'custom') {
+      try {
+        const s = JSON.parse(localStorage.getItem(K.custom) || 'null');
+        if (s) {
+          if (focusInput) focusInput.value = s.focus;
+          if (breakInput) breakInput.value = s.break;
+          if (cyclesInput) cyclesInput.value = s.cycles;
+          if (timerLabel)
+            timerLabel.textContent = `Current interval: ${s.title || 'Session'}`;
+
+          chips.forEach((c) => c.classList.remove('active'));
+
+          const mins =
+            savedInterval === 'break'
+              ? s.break
+              : savedInterval === 'long'
+                ? s.long || 15
+                : s.focus;
+
+          setTimer(mins);
+          setActiveInterval(savedInterval);
+          return;
+        }
+      } catch {
+        /* fall back to preset restore */
+      }
+    }
+
+    const savedPreset = (
+      localStorage.getItem(K.preset) || 'classic'
+    ).toLowerCase();
+    if (!selectPresetChip(savedPreset)) {
+
+      setActiveInterval(savedInterval);
+    }
+  })();
 
   (function wireQueueClicks() {
     const list = document.getElementById('sessionList');
@@ -265,6 +398,13 @@ function initInteractiveElements() {
         .querySelectorAll('.queue-item')
         .forEach((q) => q.classList.remove('is-selected'));
       btn.classList.add('is-selected');
+
+      localStorage.setItem(K.mode, 'custom');
+      localStorage.setItem(K.interval, 'focus');
+      localStorage.setItem(
+        K.custom,
+        JSON.stringify({ title, focus: focusM, break: breakM, cycles })
+      );
     });
   })();
 }

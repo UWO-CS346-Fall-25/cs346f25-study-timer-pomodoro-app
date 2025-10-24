@@ -1,34 +1,6 @@
 const crypto = require('crypto');
 
-const sessions = [
-  /*{
-    id: crypto.randomUUID(),
-    title: 'Algorithms Drill',
-    focusMinutes: 25,
-    breakMinutes: 5,
-    cycles: 4,
-    mood: 'Focused',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-  },
-  {
-    id: crypto.randomUUID(),
-    title: 'UX Research Review',
-    focusMinutes: 25,
-    breakMinutes: 5,
-    cycles: 3,
-    mood: 'Steady',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-  {
-    id: crypto.randomUUID(),
-    title: 'Capstone Planning',
-    focusMinutes: 50,
-    breakMinutes: 10,
-    cycles: 2,
-    mood: 'Energized',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
-  },*/
-];
+const sessions = [];
 
 const MAX_SESSIONS = 20;
 

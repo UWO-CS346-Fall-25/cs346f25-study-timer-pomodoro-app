@@ -102,7 +102,7 @@
 
       <article>
         <h2>Add a session to your queue</h2>
-        <form action="/focus/sessions" method="POST" class="session-form" novalidate>
+        <form action="/focus/sessions" method="POST" class="session-form" novalidate data-validate>
           <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
           <label for="title">Session label</label>
