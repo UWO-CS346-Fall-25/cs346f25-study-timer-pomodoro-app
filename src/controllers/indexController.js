@@ -180,9 +180,15 @@ exports.getInsights = async (req, res, next) => {
 
 exports.createSession = async (req, res, next) => {
   try {
+  const wantsJson =
+    req.get('x-requested-with') === 'fetch' ||
+    req.headers.accept?.includes('application/json');
     const result = sessionStore.addSession(req.body);
 
     if (!result.ok) {
+      if (wantsJson) {
+        return res.status(422).json({ ok: false, errors: result.errors });
+      }
       req.session.formErrors = result.errors;
       req.session.formValues = {
         title: req.body.title,
@@ -204,6 +210,14 @@ exports.createSession = async (req, res, next) => {
     };
     req.session.formValues = null;
     req.session.formErrors = null;
+
+    if (wantsJson) {
+      return res.status(201).json({
+        ok: true,
+        session: result.session,
+        summary: sessionStore.getSummary(),
+      });
+    }
 
     return res.redirect('/focus');
   } catch (error) {
