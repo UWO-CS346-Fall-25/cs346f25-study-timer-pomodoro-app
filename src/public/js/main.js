@@ -594,7 +594,7 @@ function initInteractiveElements() {
           setCurrentSessionId(session.id);
         }
 
-        await refreshSessions(payload);
+        await refreshSessions();
       } catch (error) {
         console.error('Failed to save session', error);
         showNotification('Could not save session. Please try again.', 'error');
