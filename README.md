@@ -67,20 +67,18 @@ The Week 7 HTML/CSS deliverable focuses on the static structure of the FocusFlow
 
 All pages share the new FocusFlow color palette and component styles, including background colors and interactive button states defined in `src/public/css/style.css`. Content remains static by design; JavaScript logic and data integration will arrive later.
 
-
 ## Current Pages (Deliverable 2)
-The Week 8 deliverable focuses on the Interactive Pages of the Focus Sessions in the FocusFlow study timer and the Basic Server Logic.
+Week 8 focuses on the interactive Focus Sessions flow and basic server logic.
 - **Ab (server & data)**
-  - Hold session data in memory (or seed JSON) and pass it to EJS.
+  - Hold session data in memory (seed JSON for defaults) and pass it to EJS.
   - Handle POST `/focus/sessions`, validate input, and set flash messages.
-  - Return a JSON API (`/api/sessions`) that Dasha’s JS can call.
-  - Write the front-end JS to create live updates for the form validation.
+  - Return a JSON API (`/api/sessions`) that client JS can call.
+  - Write the client logic to validate the form and refresh the queue live.
 - **Dasha (client experience)**
-  - Write front-end JS to wire preset buttons and form validation.
-  - Create an interactive Session queue which displays in the     current interval hero.
-  - Show inline success/error states and keep everything keyboard friendly.
-  - Polish styling/animations so the new interactions feel smooth.
-
+  - Wire preset buttons and form validation on the Focus page.
+  - Keep the current-interval hero, session queue, and summary in sync.
+  - Show inline success/error states with keyboard-friendly controls.
+  - Polish styling/animations so interactions feel smooth.
 
 ## Project Structure
 
