@@ -20,7 +20,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Application initialized');
 
-  // Example: Form validation 
+  // Example: Form validation
   initFormValidation();
 
   // Example: Interactive elements
@@ -183,7 +183,9 @@ function initInteractiveElements() {
     return localStorage.getItem(K.currentSessionId);
   }
   function markActiveQueueButton(id) {
-    const items = document.querySelectorAll('.session-queue [data-session-id], .session-queue .queue-item');
+    const items = document.querySelectorAll(
+      '.session-queue [data-session-id], .session-queue .queue-item'
+    );
     items.forEach((el) => {
       const elId = el.dataset.sessionId || '';
       const isMatch = id && elId === String(id);
@@ -212,22 +214,28 @@ function initInteractiveElements() {
       const m = parseInt(btn.dataset.focus, 10) || 0;
       display.textContent = String(m).padStart(2, '0') + ':00';
 
-      document.querySelectorAll('.preset-panel .chip').forEach((b) => b.classList.remove('active'));
+      document
+        .querySelectorAll('.preset-panel .chip')
+        .forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
 
       body.classList.remove('theme-classic', 'theme-deep', 'theme-lightning');
 
-      const label = btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() || '';
+      const label =
+        btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() ||
+        '';
       if (label.includes('classic')) body.classList.add('theme-classic');
       else if (label.includes('deep')) body.classList.add('theme-deep');
-      else if (label.includes('lightning')) body.classList.add('theme-lightning');
+      else if (label.includes('lightning'))
+        body.classList.add('theme-lightning');
 
       document.querySelectorAll('.queue-item').forEach((item) => {
         item.classList.remove('is-selected');
       });
 
       const labelEl = document.querySelector('.timer-label');
-      const presetName = btn.querySelector('.preset-name')?.textContent.trim() || 'Custom';
+      const presetName =
+        btn.querySelector('.preset-name')?.textContent.trim() || 'Custom';
       labelEl.textContent = `Current interval: ${presetName}`;
 
       const presetNameLc = presetName.toLowerCase();
@@ -289,7 +297,9 @@ function initInteractiveElements() {
 
   document.querySelectorAll('.preset-panel .chip').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const name = btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() || 'classic';
+      const name =
+        btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() ||
+        'classic';
       currentPreset = name in PRESET_MINUTES ? name : 'classic';
       setTimer(PRESET_MINUTES[currentPreset].focus);
       setActiveInterval('focus');
@@ -308,7 +318,6 @@ function initInteractiveElements() {
     setIntervalAndTimer('long');
   });
 
-
   setTimer(PRESET_MINUTES[currentPreset].focus);
   setActiveInterval('focus');
 
@@ -317,12 +326,16 @@ function initInteractiveElements() {
     const savedInterval = localStorage.getItem(K.interval) || 'focus';
 
     const chips = document.querySelectorAll('.preset-panel .chip');
-    const timerLabel = document.getElementById('timerLabel') || document.querySelector('.timer-label');
+    const timerLabel =
+      document.getElementById('timerLabel') ||
+      document.querySelector('.timer-label');
 
     const selectPresetChip = (name) => {
       chips.forEach((c) => c.classList.remove('active'));
       const chip = Array.from(chips).find(
-        (c) => c.querySelector('.preset-name')?.textContent.trim().toLowerCase() === name
+        (c) =>
+          c.querySelector('.preset-name')?.textContent.trim().toLowerCase() ===
+          name
       );
       if (chip) {
         chip.click();
@@ -341,23 +354,30 @@ function initInteractiveElements() {
           if (focusInput) focusInput.value = s.focus;
           if (breakInput) breakInput.value = s.break;
           if (cyclesInput) cyclesInput.value = s.cycles;
-          if (timerLabel) timerLabel.textContent = `Current interval: ${s.title || 'Session'}`;
+          if (timerLabel)
+            timerLabel.textContent = `Current interval: ${s.title || 'Session'}`;
 
           chips.forEach((c) => c.classList.remove('active'));
 
           const mins =
-            savedInterval === 'break' ? s.break :
-            savedInterval === 'long'  ? (s.long || 15) :
-            s.focus;
+            savedInterval === 'break'
+              ? s.break
+              : savedInterval === 'long'
+                ? s.long || 15
+                : s.focus;
 
           setTimer(mins);
           setActiveInterval(savedInterval);
           return;
         }
-      } catch { /* fall back to preset restore */ }
+      } catch {
+        /* fall back to preset restore */
+      }
     }
 
-    const savedPreset = (localStorage.getItem(K.preset) || 'classic').toLowerCase();
+    const savedPreset = (
+      localStorage.getItem(K.preset) || 'classic'
+    ).toLowerCase();
     if (!selectPresetChip(savedPreset)) {
       setActiveInterval(savedInterval);
     }
@@ -381,7 +401,9 @@ function initInteractiveElements() {
     const presetChips = document.querySelectorAll('.preset-panel .chip');
 
     function setFocusActive() {
-      [chipFocus, chipBreak, chipLong].forEach((b) => b?.classList.remove('active'));
+      [chipFocus, chipBreak, chipLong].forEach((b) =>
+        b?.classList.remove('active')
+      );
       chipFocus?.classList.add('active');
     }
 
@@ -394,11 +416,12 @@ function initInteractiveElements() {
       const btn = e.target.closest('.queue-item');
       if (!btn) return;
 
-      if (!btn.dataset.sessionId) btn.dataset.sessionId = computeFallbackId(btn);
+      if (!btn.dataset.sessionId)
+        btn.dataset.sessionId = computeFallbackId(btn);
 
-      const title  = btn.dataset.title  || 'Session';
-      const focusM = parseInt(btn.dataset.focus  || '25', 10);
-      const breakM = parseInt(btn.dataset.break  || '5', 10);
+      const title = btn.dataset.title || 'Session';
+      const focusM = parseInt(btn.dataset.focus || '25', 10);
+      const breakM = parseInt(btn.dataset.break || '5', 10);
       const cycles = parseInt(btn.dataset.cycles || '1', 10);
 
       if (focusInput) focusInput.value = focusM;
@@ -406,12 +429,14 @@ function initInteractiveElements() {
       if (cyclesInput) cyclesInput.value = cycles;
 
       if (timerDisplay) timerDisplay.textContent = toMMSS(focusM);
-      if (timerLabel)  timerLabel.textContent  = `Current interval: ${title}`;
+      if (timerLabel) timerLabel.textContent = `Current interval: ${title}`;
 
       setFocusActive();
       presetChips.forEach((chip) => chip.classList.remove('active'));
 
-      list.querySelectorAll('.queue-item').forEach((q) => q.classList.remove('is-selected'));
+      list
+        .querySelectorAll('.queue-item')
+        .forEach((q) => q.classList.remove('is-selected'));
       btn.classList.add('is-selected');
 
       localStorage.setItem(K.mode, 'custom');
@@ -429,10 +454,12 @@ function initInteractiveElements() {
     if (restoredId) {
       let tries = 0;
       const tryMark = () => {
-        const el = Array.from(list.querySelectorAll('.queue-item')).find((q) => {
-          const id = q.dataset.sessionId || computeFallbackId(q);
-          return id === restoredId;
-        });
+        const el = Array.from(list.querySelectorAll('.queue-item')).find(
+          (q) => {
+            const id = q.dataset.sessionId || computeFallbackId(q);
+            return id === restoredId;
+          }
+        );
         if (el) {
           el.classList.add('is-selected');
           markActiveQueueButton(restoredId);
@@ -446,7 +473,9 @@ function initInteractiveElements() {
   })();
 
   (function wireAddSessionForm() {
-    const form = document.getElementById('addSessionForm') || document.querySelector('form[data-validate]');
+    const form =
+      document.getElementById('addSessionForm') ||
+      document.querySelector('form[data-validate]');
     if (!form) return;
 
     form.addEventListener('submit', function () {
@@ -486,8 +515,6 @@ function initInteractiveElements() {
         JSON.stringify({ title, focus: focusM, break: breakM, cycles })
       );
 
-
-
       const targetId = `${title}|${focusM}|${breakM}|${cycles}`;
       setCurrentSessionId(targetId);
 
@@ -520,7 +547,6 @@ function initInteractiveElements() {
     });
   })();
 }
-
 
 /**
  * Make an AJAX request
