@@ -63,15 +63,18 @@
     <section class="schedule-grid">
       <article>
         <h2>Session queue</h2>
-        <% if (sessions.length === 0) { %>
-          <p class="empty-state">No sessions queued yet. Use the form to add your first focus block.</p>
-        <% } else { %>
-          <ul class="session-list" id="sessionList">
+        <ul class="session-list" id="sessionList">
+          <% if (sessions.length === 0) { %>
+            <li class="empty-state">
+              No sessions queued yet. Use the form to add your first focus block.
+            </li>
+          <% } else { %>
             <% sessions.forEach((session) => { %>
               <li data-session-id="<%= session.id %>">
                 <button
                   type="button"
                   class="queue-item"
+                  data-session-id="<%= session.id %>"
                   data-title="<%= session.title %>"
                   data-focus="<%= session.focusMinutes %>"
                   data-break="<%= session.breakMinutes %>"
@@ -86,8 +89,8 @@
                 </button>
               </li>
             <% }); %>
-          </ul>
-        <% } %>
+          <% } %>
+        </ul>
       </article>
 
       <article>
@@ -102,7 +105,14 @@
 
       <article>
         <h2>Add a session to your queue</h2>
-        <form action="/focus/sessions" method="POST" class="session-form" novalidate data-validate>
+        <form
+          id="addSessionForm"
+          action="/focus/sessions"
+          method="POST"
+          class="session-form"
+          novalidate
+          data-validate
+        >
           <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
           <label for="title">Session label</label>
@@ -193,15 +203,15 @@
         <ul class="summary-list" id="sessionSummary">
           <li>
             <strong>Total focus minutes:</strong>
-            <span><%= summary.totalFocusMinutes %></span>
+            <span data-summary="focus"><%= summary.totalFocusMinutes %></span>
           </li>
           <li>
             <strong>Total cycles scheduled:</strong>
-            <span><%= summary.totalCycles %></span>
+            <span data-summary="cycles"><%= summary.totalCycles %></span>
           </li>
           <li>
             <strong>Average focus block:</strong>
-            <span><%= summary.averageFocusBlock || 0 %> minutes</span>
+            <span data-summary="average"><%= summary.averageFocusBlock || 0 %> minutes</span>
           </li>
         </ul>
       </article>
