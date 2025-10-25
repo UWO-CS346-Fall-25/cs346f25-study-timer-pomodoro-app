@@ -226,7 +226,6 @@ function initInteractiveElements() {
   const titleInput = document.getElementById('title');
 
   const K = STORAGE_KEYS;
-<<<<<<< HEAD
   const presetChips = document.querySelectorAll('.preset-panel .chip');
 
   const getCustomSession = () => {
@@ -247,8 +246,6 @@ function initInteractiveElements() {
     localStorage.setItem(K.mode, 'custom');
     localStorage.setItem(K.custom, JSON.stringify(payload));
   };
-=======
->>>>>>> ebb3e797b223db61c20e9081f9e4a2dc611d80ec
 
   presetChips.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -335,11 +332,7 @@ function initInteractiveElements() {
     if (which === 'long') longBreakBtn.classList.add('active');
   }
 
-<<<<<<< HEAD
   presetChips.forEach((btn) => {
-=======
-  document.querySelectorAll('.preset-panel .chip').forEach((btn) => {
->>>>>>> ebb3e797b223db61c20e9081f9e4a2dc611d80ec
     btn.addEventListener('click', () => {
       const name =
         btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() ||
@@ -352,31 +345,19 @@ function initInteractiveElements() {
   });
 
   focusBtn?.addEventListener('click', () => {
-<<<<<<< HEAD
     setTimer(minutesFor('focus'));
-=======
-    setTimer(PRESET_MINUTES[currentPreset].focus);
->>>>>>> ebb3e797b223db61c20e9081f9e4a2dc611d80ec
     setActiveInterval('focus');
     localStorage.setItem(K.interval, 'focus');
   });
 
   breakBtn?.addEventListener('click', () => {
-<<<<<<< HEAD
     setTimer(minutesFor('break'));
-=======
-    setTimer(PRESET_MINUTES[currentPreset].break);
->>>>>>> ebb3e797b223db61c20e9081f9e4a2dc611d80ec
     setActiveInterval('break');
     localStorage.setItem(K.interval, 'break');
   });
 
   longBreakBtn?.addEventListener('click', () => {
-<<<<<<< HEAD
     setTimer(minutesFor('long'));
-=======
-    setTimer(PRESET_MINUTES[currentPreset].long);
->>>>>>> ebb3e797b223db61c20e9081f9e4a2dc611d80ec
     setActiveInterval('long');
     localStorage.setItem(K.interval, 'long');
   });
