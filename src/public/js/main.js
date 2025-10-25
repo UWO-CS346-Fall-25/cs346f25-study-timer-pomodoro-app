@@ -75,7 +75,7 @@ function initFormValidation() {
   forms.forEach((form) => {
     form.addEventListener('submit', function (e) {
       if (!validateForm(form)) {
-        //e.preventDefault();
+        e.preventDefault();
       }
     });
   });
@@ -104,11 +104,14 @@ function validateForm(form) {
   const brk = form.querySelector('#breakMinutes');
   const cycles = form.querySelector('#cycles');
 
-  if (title && title.value.trim().length > 60) {
-    showError(title, 'Title must be 60 characters or fewer');
-    isValid = false;
-  } else if (title) {
-    clearError(title);
+  if (title) {
+    const trimmedTitle = title.value.trim();
+    if (trimmedTitle.length > 60) {
+      showError(title, 'Title must be 60 characters or fewer');
+      isValid = false;
+    } else if (trimmedTitle.length > 0) {
+      clearError(title);
+    }
   }
 
   const asInt = (el) => parseInt(el && el.value, 10);
