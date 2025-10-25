@@ -20,7 +20,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Application initialized');
 
-  // Example: Form validation
+  // Example: Form validation 
   initFormValidation();
 
   // Example: Interactive elements
@@ -262,6 +262,31 @@ function initInteractiveElements() {
     if (which === 'long') longBreakBtn?.classList.add('active');
   }
 
+  function getMode() {
+    return localStorage.getItem(K.mode) || 'preset';
+  }
+  function getCustomSession() {
+    try {
+      return JSON.parse(localStorage.getItem(K.custom) || 'null');
+    } catch {
+      return null;
+    }
+  }
+  function minutesFor(which) {
+    if (getMode() === 'custom') {
+      const s = getCustomSession() || {};
+      if (which === 'focus') return parseInt(s.focus || 25, 10);
+      if (which === 'break') return parseInt(s.break || 5, 10);
+      if (which === 'long') return parseInt(s.long || 15, 10);
+    }
+    return PRESET_MINUTES[currentPreset][which === 'long' ? 'long' : which];
+  }
+  function setIntervalAndTimer(which) {
+    setActiveInterval(which);
+    localStorage.setItem(K.interval, which);
+    setTimer(minutesFor(which));
+  }
+
   document.querySelectorAll('.preset-panel .chip').forEach((btn) => {
     btn.addEventListener('click', () => {
       const name = btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() || 'classic';
@@ -272,20 +297,18 @@ function initInteractiveElements() {
   });
 
   focusBtn?.addEventListener('click', () => {
-    setTimer(PRESET_MINUTES[currentPreset].focus);
-    setActiveInterval('focus');
-    localStorage.setItem(K.interval, 'focus');
+    setIntervalAndTimer('focus');
   });
+
   breakBtn?.addEventListener('click', () => {
-    setTimer(PRESET_MINUTES[currentPreset].break);
-    setActiveInterval('break');
-    localStorage.setItem(K.interval, 'break');
+    setIntervalAndTimer('break');
   });
+
   longBreakBtn?.addEventListener('click', () => {
-    setTimer(PRESET_MINUTES[currentPreset].long);
-    setActiveInterval('long');
-    localStorage.setItem(K.interval, 'long');
+    setIntervalAndTimer('long');
   });
+
+
   setTimer(PRESET_MINUTES[currentPreset].focus);
   setActiveInterval('focus');
 
@@ -371,7 +394,7 @@ function initInteractiveElements() {
       const btn = e.target.closest('.queue-item');
       if (!btn) return;
 
-      if (!btn.dataset.sessionId) btn.dataset.sessionId = computeFallbackId(btn); 
+      if (!btn.dataset.sessionId) btn.dataset.sessionId = computeFallbackId(btn);
 
       const title  = btn.dataset.title  || 'Session';
       const focusM = parseInt(btn.dataset.focus  || '25', 10);
