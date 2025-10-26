@@ -56,16 +56,12 @@ const workflowSteps = [
   },
 ];
 
-const focusPresets = [
-  { label: 'Classic', focus: 25, break: 5 },
-  { label: 'Deep Work', focus: 50, break: 10 },
-  { label: 'Lightning', focus: 15, break: 3 },
-];
+const sessionStore = require('../models/sessionStore');
 
-const recentSessions = [
-  { name: 'Algorithms Drill', duration: '4 x 25', mood: 'Focused' },
-  { name: 'UX Research Review', duration: '3 x 25', mood: 'Steady' },
-  { name: 'Capstone Planning', duration: '2 x 50', mood: 'Energized' },
+const focusPresets = [
+  { label: 'Classic', focus: 25, break: 5, cycles: 4 },
+  { label: 'Deep Work', focus: 50, break: 10, cycles: 2 },
+  { label: 'Lightning', focus: 15, break: 3, cycles: 3 },
 ];
 
 const reflectionPrompts = [
@@ -116,10 +112,24 @@ exports.getAbout = async (req, res, next) => {
 
 exports.getFocus = async (req, res, next) => {
   try {
+    const sessions = sessionStore.listSessions();
+    const summary = sessionStore.getSummary();
+    const values = res.locals.formValues || {
+      title: '',
+      focusMinutes: '',
+      breakMinutes: '',
+      cycles: '',
+      mood: '',
+    };
+
     res.render('focus', {
       title: 'Focus Sessions',
       pageId: 'focus',
       focusPresets,
+      sessions,
+      summary,
+      formValues: values,
+      formErrors: res.locals.formErrors || {},
       csrfToken: req.csrfToken(),
     });
   } catch (error) {
@@ -129,10 +139,37 @@ exports.getFocus = async (req, res, next) => {
 
 exports.getInsights = async (req, res, next) => {
   try {
+    const sessions = sessionStore.listSessions();
+    const summary = sessionStore.getSummary();
+    const recentSessions = sessions.slice(0, 5).map((session) => ({
+      id: session.id,
+      title: session.title,
+      mood: session.mood,
+      focusMinutes: session.focusMinutes,
+      cycles: session.cycles,
+      createdAt: session.createdAt,
+    }));
+
+    const hours = Math.floor(summary.totalFocusMinutes / 60);
+    const minutes = summary.totalFocusMinutes % 60;
+    const totalFocusLabel =
+      summary.totalFocusMinutes === 0
+        ? '0 min'
+        : `${hours > 0 ? `${hours} hr${hours > 1 ? 's' : ''} ` : ''}${minutes} min`;
+
+    const insights = {
+      streakDays: Math.min(recentSessions.length, 5),
+      totalFocusLabel,
+      latestMood: recentSessions.length > 0 ? recentSessions[0].mood : 'Getting started',
+    };
+
     res.render('insights', {
       title: 'Progress Insights',
       pageId: 'insights',
+      sessions,
+      summary,
       recentSessions,
+      insights,
       reflectionPrompts,
       csrfToken: req.csrfToken(),
     });
@@ -141,4 +178,60 @@ exports.getInsights = async (req, res, next) => {
   }
 };
 
-// Add more controller methods as needed
+exports.createSession = async (req, res, next) => {
+  try {
+  const wantsJson =
+    req.get('x-requested-with') === 'fetch' ||
+    req.headers.accept?.includes('application/json');
+    const result = sessionStore.addSession(req.body);
+
+    if (!result.ok) {
+      if (wantsJson) {
+        return res.status(422).json({ ok: false, errors: result.errors });
+      }
+      req.session.formErrors = result.errors;
+      req.session.formValues = {
+        title: req.body.title,
+        focusMinutes: req.body.focusMinutes,
+        breakMinutes: req.body.breakMinutes,
+        cycles: req.body.cycles,
+        mood: req.body.mood,
+      };
+      req.session.flash = {
+        type: 'error',
+        heading: 'Please fix the highlighted fields.',
+      };
+      return res.redirect('/focus');
+    }
+
+    req.session.flash = {
+      type: 'success',
+      heading: 'Session added to your queue.',
+    };
+    req.session.formValues = null;
+    req.session.formErrors = null;
+
+    if (wantsJson) {
+      return res.status(201).json({
+        ok: true,
+        session: result.session,
+        summary: sessionStore.getSummary(),
+      });
+    }
+
+    return res.redirect('/focus');
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getSessionsJson = (req, res, next) => {
+  try {
+    res.json({
+      sessions: sessionStore.listSessions(),
+      summary: sessionStore.getSummary(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};

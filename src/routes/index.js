@@ -24,5 +24,7 @@ router.get('/', indexController.getHome);
 router.get('/focus', indexController.getFocus);
 router.get('/insights', indexController.getInsights);
 router.get('/about', indexController.getAbout);
+router.post('/focus/sessions', indexController.createSession);
+router.get('/api/sessions', indexController.getSessionsJson);
 
 module.exports = router;
