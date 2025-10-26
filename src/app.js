@@ -72,6 +72,12 @@ app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
   res.locals.navLinks = navLinks;
   res.locals.currentPath = req.path;
+  res.locals.flash = req.session.flash || null;
+  res.locals.formValues = req.session.formValues || {};
+  res.locals.formErrors = req.session.formErrors || {};
+  delete req.session.flash;
+  delete req.session.formValues;
+  delete req.session.formErrors;
   next();
 });
 

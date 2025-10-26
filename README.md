@@ -1,6 +1,6 @@
-# CS346 Semester Project Template
+# FocusFlow Study Timer App
 
-A teaching template for building secure web applications with Node.js, Express, EJS, and PostgreSQL.
+FocusFlow is our CS346 semester project for building a study timer web application with Node.js, Express, EJS, and PostgreSQL.
 
 ## Features
 
@@ -15,8 +15,8 @@ A teaching template for building secure web applications with Node.js, Express, 
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repository-url>
-   cd cs346-semester-project-template
+   git clone https://github.com/UWO-CS346-Fall-25/cs346f25-study-timer-pomodoro-app.git
+   cd cs346f25-study-timer-pomodoro-app
    ```
 
 2. **Install dependencies**
@@ -66,6 +66,19 @@ The Week 7 HTML/CSS deliverable focuses on the static structure of the FocusFlow
 - About (`/about`) – Team introduction plus the goals for this deliverable.
 
 All pages share the new FocusFlow color palette and component styles, including background colors and interactive button states defined in `src/public/css/style.css`. Content remains static by design; JavaScript logic and data integration will arrive later.
+
+## Current Pages (Deliverable 2)
+Week 8 focuses on the interactive Focus Sessions flow and basic server logic.
+- **Ab (server & data)**
+  - Hold session data in memory (seed JSON for defaults) and pass it to EJS.
+  - Handle POST `/focus/sessions`, validate input, and set flash messages.
+  - Return a JSON API (`/api/sessions`) that client JS can call.
+  - Write the client logic to validate the form and refresh the queue live.
+- **Dasha (client experience)**
+  - Wire preset buttons and form validation on the Focus page.
+  - Keep the current-interval hero, session queue, and summary in sync.
+  - Show inline success/error states with keyboard-friendly controls.
+  - Polish styling/animations so interactions feel smooth.
 
 ## Project Structure
 
