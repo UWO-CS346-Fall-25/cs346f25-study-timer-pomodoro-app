@@ -64,6 +64,16 @@ const focusPresets = [
   { label: 'Lightning', focus: 15, break: 3, cycles: 3 },
 ];
 
+const moodOptions = [
+  'Focused',
+  'Calm',
+  'Motivated',
+  'Tired',
+  'Stressed',
+  'Energized',
+  'Steady',
+];
+
 const reflectionPrompts = [
   'What helped you stay on task today?',
   'Where did you lose momentum and why?',
@@ -125,6 +135,7 @@ exports.getFocus = async (req, res, next) => {
     res.render('focus', {
       title: 'Focus Sessions',
       pageId: 'focus',
+      moodOptions,
       focusPresets,
       sessions,
       summary,

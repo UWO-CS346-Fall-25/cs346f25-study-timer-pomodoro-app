@@ -184,15 +184,22 @@
             </div>
           </div>
 
-          <label for="mood">How are you feeling?</label>
-          <input
-            type="text"
+          <label for="mood">
+            How are you feeling?
+            <span class="label-note">(Optional note)</span>
+          </label>
+          <select
             id="mood"
             name="mood"
-            maxlength="40"
-            value="<%= formValues.mood || '' %>"
-            placeholder="Optional note (e.g., Focused, Calm)"
-          />
+            class="<%= formErrors.mood ? 'error' : '' %>"
+          >
+            <option value="">Select your mood</option>
+            <% const moodOptions = ['Focused', 'Calm', 'Motivated', 'Tired', 'Stressed', 'Energized', 'Steady']; %>
+              <% moodOptions.forEach(function(m) { %>
+                <option value="<%= m %>" <%= (formValues.mood === m) ? 'selected' : '' %>><%= m %></option>
+              <% }) %>
+          </select>
+
 
           <button class="button primary" type="submit">Add session</button>
         </form>

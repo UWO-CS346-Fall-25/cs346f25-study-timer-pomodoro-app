@@ -14,39 +14,46 @@ FocusFlow is our CS346 semester project for building a study timer web applicati
 ## Quick Start
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/UWO-CS346-Fall-25/cs346f25-study-timer-pomodoro-app.git
    cd cs346f25-study-timer-pomodoro-app
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env
    # Edit .env with your database credentials
    ```
 
 4. **Set up PostgreSQL database**
+
    ```bash
    # Create database (adjust credentials as needed)
    createdb your_database_name
    ```
 
 5. **Run migrations**
+
    ```bash
    npm run migrate
    ```
 
 6. **Seed database (optional)**
+
    ```bash
    npm run seed
    ```
 
 7. **Start the application**
+
    ```bash
    npm run dev
    ```
@@ -68,7 +75,9 @@ The Week 7 HTML/CSS deliverable focuses on the static structure of the FocusFlow
 All pages share the new FocusFlow color palette and component styles, including background colors and interactive button states defined in `src/public/css/style.css`. Content remains static by design; JavaScript logic and data integration will arrive later.
 
 ## Current Pages (Deliverable 2)
+
 Week 8 focuses on the interactive Focus Sessions flow and basic server logic.
+
 - **Ab (server & data)**
   - Hold session data in memory (seed JSON for defaults) and pass it to EJS.
   - Handle POST `/focus/sessions`, validate input, and set flash messages.
@@ -79,6 +88,14 @@ Week 8 focuses on the interactive Focus Sessions flow and basic server logic.
   - Keep the current-interval hero, session queue, and summary in sync.
   - Show inline success/error states with keyboard-friendly controls.
   - Polish styling/animations so interactions feel smooth.
+
+## Current Pages (Deliverable 3)
+
+Week 9 focuses on front-end polish, form design, and usability improvements.
+
+- Added 3 input types in session queue form (input, number, and drop down menu)
+- Integrated CSS background, header, and footer transitions and animations when quick presets buttons are clicked
+- Updated button clicks by adding a transition to show when a button is pressed
 
 ## Project Structure
 
@@ -154,6 +171,7 @@ Comprehensive documentation is available in the `docs/` folder:
 ## Contributing
 
 This is a teaching template. Feel free to:
+
 - Report issues
 - Suggest improvements
 - Submit pull requests

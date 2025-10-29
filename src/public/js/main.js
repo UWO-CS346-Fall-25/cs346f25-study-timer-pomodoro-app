@@ -228,6 +228,25 @@ function initInteractiveElements() {
   const cyclesInput = document.getElementById('cycles');
   const titleInput = document.getElementById('title');
 
+  function triggerThemeSweep() {
+    body.classList.add('animate-bg');
+    body.addEventListener(
+      'animationend',
+      (e) => {
+        if (e.animationName === 'bgSweep') body.classList.remove('animate-bg');
+      },
+      { once: true }
+    );
+  }
+
+  document.querySelectorAll('input[type="number"]').forEach((input) => {
+    input.addEventListener('keydown', function (e) {
+      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+  });
+
   const K = STORAGE_KEYS;
   const presetChips = document.querySelectorAll('.preset-panel .chip');
 
@@ -271,11 +290,12 @@ function initInteractiveElements() {
       else if (label.includes('deep')) body.classList.add('theme-deep');
       else if (label.includes('lightning'))
         body.classList.add('theme-lightning');
+      triggerThemeSweep();
 
       document.querySelectorAll('.queue-item').forEach((item) => {
         item.classList.remove('is-selected');
       });
-      
+
       const labelEl = document.querySelector('.timer-label');
       const presetName =
         btn.querySelector('.preset-name')?.textContent.trim() || 'Custom';
@@ -739,7 +759,6 @@ async function refreshSessions(prefetched) {
  * @param {string} message - Message to display
  * @param {string} type - Type of message (success, error, info, warning)
  */
-/* eslint-disable no-unused-vars */
 function showNotification(message, type = 'info') {
   // Create notification element
   const notification = document.createElement('div');
