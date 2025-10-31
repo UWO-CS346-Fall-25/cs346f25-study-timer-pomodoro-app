@@ -303,8 +303,7 @@ function initInteractiveElements() {
 
       const presetNameLc = presetName.toLowerCase();
       let normalized = 'classic';
-      if (presetNameLc.includes('deep'))
-        normalized = 'deep work';
+      if (presetNameLc.includes('deep')) normalized = 'deep work';
       else if (presetNameLc.includes('lightning')) normalized = 'lightning';
       localStorage.setItem(K.mode, 'preset');
       localStorage.setItem(K.preset, normalized);
@@ -406,10 +405,8 @@ function initInteractiveElements() {
       );
       if (chip) {
         chip.click();
-        if (savedInterval === 'break')
-          breakBtn?.click();
-        else if (savedInterval === 'long')
-          longBreakBtn?.click();
+        if (savedInterval === 'break') breakBtn?.click();
+        else if (savedInterval === 'long') longBreakBtn?.click();
         else focusBtn?.click();
         return true;
       }
@@ -448,7 +445,6 @@ function initInteractiveElements() {
       localStorage.getItem(K.preset) || 'classic'
     ).toLowerCase();
     if (!selectPresetChip(savedPreset)) {
-
       setActiveInterval(savedInterval);
     }
   })();
@@ -591,9 +587,11 @@ function initInteractiveElements() {
           const displayEl =
             document.getElementById('timerDisplay') ||
             document.querySelector('.timer-display');
-          if (labelEl) labelEl.textContent = `Current interval: ${session.title}`;
+          if (labelEl)
+            labelEl.textContent = `Current interval: ${session.title}`;
           if (displayEl)
-            displayEl.textContent = String(session.focusMinutes).padStart(2, '0') + ':00';
+            displayEl.textContent =
+              String(session.focusMinutes).padStart(2, '0') + ':00';
 
           const chipFocus = document.getElementById('chipFocus');
           const chipBreak = document.getElementById('chipBreak');
@@ -621,6 +619,101 @@ function initInteractiveElements() {
       } catch (error) {
         console.error('Failed to save session', error);
         showNotification('Could not save session. Please try again.', 'error');
+      }
+    });
+  })();
+
+  (function wireGoalForm() {
+    const form =
+      document.getElementById('addGoalForm') ||
+      document.querySelector('form[data-goal-form]');
+    if (!form) return;
+
+    const list = document.getElementById('focusGoalsList');
+
+    function renderGoalLI(goal) {
+      const due = goal.dueDate ? new Date(goal.dueDate) : null;
+      const dueText = due
+        ? `Due ${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : '';
+      const pri = (goal.priority || '').toLowerCase();
+
+      return `
+      <li data-goal-id="${goal.id || crypto?.randomUUID?.() || Date.now()}">
+        <div class="goal-item">
+          <h3>${sanitize(goal.title || 'Goal')}</h3>
+          <p class="goal-meta">
+            <span data-goal-priority="${pri}">${sanitize(goal.priority || 'Normal')} priority</span>
+            · <time datetime="${goal.dueDate || ''}">${dueText}</time>
+          </p>
+          <p class="goal-notes">
+            <strong>Focus target:</strong> ${Number(goal.targetFocusMinutes || 0)} minutes
+            ${goal.setReminder ? ' · Reminder enabled' : ''}
+            ${goal.notes ? `<br><span>${sanitize(goal.notes)}</span>` : ''}
+          </p>
+        </div>
+      </li>`;
+    }
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      clearServerErrors(form);
+
+      if (!validateForm(form)) return;
+
+      const fd = new FormData(form);
+      const csrf = fd.get('_csrf') || '';
+      const payload = {};
+      fd.forEach((v, k) => (payload[k] = v));
+
+      payload.setReminder = !!fd.get('setReminder');
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'fetch',
+            'X-CSRF-Token': csrf,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload),
+        });
+
+        if (res.status === 422) {
+          const { errors = {} } = await res.json().catch(() => ({}));
+          Object.entries(errors).forEach(([name, msg]) => {
+            const el = form.querySelector(`[name="${name}"]`);
+            if (el) showError(el, msg, true);
+          });
+          showNotification('Please fix the highlighted fields.', 'error');
+          return;
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json().catch(() => ({}));
+        const saved = data.goal || {
+          title: payload.title,
+          targetFocusMinutes: payload.targetFocusMinutes,
+          dueDate: payload.dueDate,
+          priority: payload.priority,
+          notes: payload.notes,
+          setReminder: payload.setReminder,
+        };
+
+        if (list) {
+          const empty = list.querySelector('.empty-state');
+          if (empty) empty.remove();
+          list.insertAdjacentHTML('afterbegin', renderGoalLI(saved));
+        }
+
+        form.reset();
+        showNotification('Goal successfully added!', 'success');
+      } catch (err) {
+        console.error('Save goal failed', err);
+        showNotification('Could not save goal. Please try again.', 'error');
       }
     });
   })();
@@ -774,8 +867,13 @@ function showNotification(message, type = 'info') {
       gravity: 'top',
       position: 'right',
       stopOnFocus: true,
+      close: true,
+      className: `ff-toast ff-toast--${type}`,
       style: {
-        background: palette[type] || palette.info,
+        background:
+          type === 'success'
+            ? 'linear-gradient(90deg,#00b09b,#96c93d)'
+            : palette[type] || palette.info,
         color: '#ffffff',
         boxShadow: '0 10px 25px -15px rgba(15, 23, 42, 0.6)',
         borderRadius: '999px',
