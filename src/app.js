@@ -75,9 +75,13 @@ app.use((req, res, next) => {
   res.locals.flash = req.session.flash || null;
   res.locals.formValues = req.session.formValues || {};
   res.locals.formErrors = req.session.formErrors || {};
+  res.locals.goalFormValues = req.session.goalFormValues || {};
+  res.locals.goalFormErrors = req.session.goalFormErrors || {};
   delete req.session.flash;
   delete req.session.formValues;
   delete req.session.formErrors;
+  delete req.session.goalFormValues;
+  delete req.session.goalFormErrors;
   next();
 });
 

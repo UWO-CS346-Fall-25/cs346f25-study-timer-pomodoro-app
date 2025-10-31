@@ -760,7 +760,36 @@ async function refreshSessions(prefetched) {
  * @param {string} type - Type of message (success, error, info, warning)
  */
 function showNotification(message, type = 'info') {
-  // Create notification element
+  const palette = {
+    success: '#16a34a',
+    error: '#dc2626',
+    warning: '#f97316',
+    info: '#2563eb',
+  };
+
+  if (typeof Toastify === 'function') {
+    Toastify({
+      text: message,
+      duration: 3500,
+      gravity: 'top',
+      position: 'right',
+      stopOnFocus: true,
+      style: {
+        background: palette[type] || palette.info,
+        color: '#ffffff',
+        boxShadow: '0 10px 25px -15px rgba(15, 23, 42, 0.6)',
+        borderRadius: '999px',
+        padding: '0.85rem 1.5rem',
+      },
+      offset: {
+        x: 20,
+        y: 20,
+      },
+    }).showToast();
+    return;
+  }
+
+  // Fallback for environments where Toastify is unavailable
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
   notification.textContent = message;
@@ -768,26 +797,17 @@ function showNotification(message, type = 'info') {
   notification.style.top = '20px';
   notification.style.right = '20px';
   notification.style.padding = '1rem';
-  notification.style.borderRadius = '4px';
-  notification.style.backgroundColor =
-    type === 'success'
-      ? '#28a745'
-      : type === 'error'
-        ? '#dc3545'
-        : type === 'warning'
-          ? '#ffc107'
-          : '#17a2b8';
-  notification.style.color = 'white';
+  notification.style.borderRadius = '999px';
+  notification.style.backgroundColor = palette[type] || palette.info;
+  notification.style.color = '#ffffff';
   notification.style.zIndex = '1000';
-  notification.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+  notification.style.boxShadow = '0 10px 25px -15px rgba(15, 23, 42, 0.6)';
 
-  // Add to page
   document.body.appendChild(notification);
 
-  // Remove after 3 seconds
   setTimeout(() => {
     notification.remove();
-  }, 3000);
+  }, 3500);
 }
 
 // Export functions if using modules

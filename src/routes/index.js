@@ -25,6 +25,8 @@ router.get('/focus', indexController.getFocus);
 router.get('/insights', indexController.getInsights);
 router.get('/about', indexController.getAbout);
 router.post('/focus/sessions', indexController.createSession);
+router.post('/focus/goals', indexController.createGoal);
 router.get('/api/sessions', indexController.getSessionsJson);
+router.get('/api/goals', indexController.getGoalsJson);
 
 module.exports = router;

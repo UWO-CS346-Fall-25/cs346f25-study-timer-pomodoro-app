@@ -57,6 +57,7 @@ const workflowSteps = [
 ];
 
 const sessionStore = require('../models/sessionStore');
+const goalStore = require('../models/goalStore');
 
 const focusPresets = [
   { label: 'Classic', focus: 25, break: 5, cycles: 4 },
@@ -131,6 +132,14 @@ exports.getFocus = async (req, res, next) => {
       cycles: '',
       mood: '',
     };
+    const goalValues = res.locals.goalFormValues || {
+      title: '',
+      targetFocusMinutes: '',
+      dueDate: '',
+      priority: '',
+      notes: '',
+      setReminder: false,
+    };
 
     res.render('focus', {
       title: 'Focus Sessions',
@@ -141,6 +150,11 @@ exports.getFocus = async (req, res, next) => {
       summary,
       formValues: values,
       formErrors: res.locals.formErrors || {},
+      goals: goalStore.listGoals(),
+      goalSnapshot: goalStore.getSnapshot(),
+      goalFormValues: goalValues,
+      goalFormErrors: res.locals.goalFormErrors || {},
+      goalPriorityOptions: goalStore.PRIORITY_LEVELS,
       csrfToken: req.csrfToken(),
     });
   } catch (error) {
@@ -173,6 +187,7 @@ exports.getInsights = async (req, res, next) => {
       totalFocusLabel,
       latestMood: recentSessions.length > 0 ? recentSessions[0].mood : 'Getting started',
     };
+    const goals = goalStore.listGoals();
 
     res.render('insights', {
       title: 'Progress Insights',
@@ -182,6 +197,8 @@ exports.getInsights = async (req, res, next) => {
       recentSessions,
       insights,
       reflectionPrompts,
+      goals,
+      goalSnapshot: goalStore.getSnapshot(),
       csrfToken: req.csrfToken(),
     });
   } catch (error) {
@@ -241,6 +258,66 @@ exports.getSessionsJson = (req, res, next) => {
     res.json({
       sessions: sessionStore.listSessions(),
       summary: sessionStore.getSummary(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createGoal = async (req, res, next) => {
+  try {
+    const wantsJson =
+      req.get('x-requested-with') === 'fetch' ||
+      req.headers.accept?.includes('application/json');
+    const result = goalStore.addGoal(req.body);
+
+    if (!result.ok) {
+      if (wantsJson) {
+        return res.status(422).json({ ok: false, errors: result.errors });
+      }
+      req.session.goalFormErrors = result.errors;
+      req.session.goalFormValues = {
+        title: req.body.title,
+        targetFocusMinutes: req.body.targetFocusMinutes,
+        dueDate: req.body.dueDate,
+        priority: req.body.priority,
+        notes: req.body.notes,
+        setReminder: req.body.setReminder,
+      };
+      req.session.flash = {
+        type: 'error',
+        heading: 'Goal could not be saved. Review the highlighted fields.',
+      };
+      return res.redirect('/focus');
+    }
+
+    req.session.flash = {
+      type: 'success',
+      heading: 'Goal added to your focus plan.',
+    };
+    req.session.goalFormValues = null;
+    req.session.goalFormErrors = null;
+
+    if (wantsJson) {
+      return res.status(201).json({
+        ok: true,
+        goal: result.goal,
+        goals: goalStore.listGoals(),
+        snapshot: goalStore.getSnapshot(),
+      });
+    }
+
+    return res.redirect('/focus');
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getGoalsJson = (req, res, next) => {
+  try {
+    res.json({
+      goals: goalStore.listGoals(),
+      snapshot: goalStore.getSnapshot(),
     });
   } catch (error) {
     next(error);

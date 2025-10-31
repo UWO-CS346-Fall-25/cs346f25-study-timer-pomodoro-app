@@ -222,6 +222,156 @@
           </li>
         </ul>
       </article>
+
+      <article>
+        <h2>Upcoming focus goals</h2>
+        <ul class="goal-list" id="focusGoalsList">
+          <% if (!goals || goals.length === 0) { %>
+            <li class="empty-state">No goals scheduled yet. Add one to guide your next deep work block.</li>
+          <% } else { %>
+            <% goals.forEach((goal) => { %>
+              <li data-goal-id="<%= goal.id %>">
+                <div class="goal-item">
+                  <h3><%= goal.title %></h3>
+                  <p class="goal-meta">
+                    <span data-goal-priority="<%= goal.priority.toLowerCase() %>"><%= goal.priority %> priority</span>
+                    ·
+                    <time datetime="<%= goal.dueDate %>">
+                      Due
+                      <%= new Date(goal.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                    </time>
+                  </p>
+                  <p class="goal-notes">
+                    <strong>Focus target:</strong> <%= goal.targetFocusMinutes %> minutes
+                    <% if (goal.setReminder) { %>
+                      · Reminder enabled
+                    <% } %>
+                    <% if (goal.notes) { %>
+                      <br />
+                      <span><%= goal.notes %></span>
+                    <% } %>
+                  </p>
+                </div>
+              </li>
+            <% }); %>
+          <% } %>
+        </ul>
+      </article>
+
+      <article>
+        <h2>Plan a focus goal</h2>
+        <p class="form-intro">
+          Capture the study target you want to hit this week. These goals power the insights view and upcoming reminders.
+        </p>
+        <form
+          id="addGoalForm"
+          action="/focus/goals"
+          method="POST"
+          class="goal-form"
+          novalidate
+          data-goal-form
+        >
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+          <label for="goalTitle">Goal title</label>
+          <input
+            type="text"
+            id="goalTitle"
+            name="title"
+            maxlength="80"
+            value="<%= goalFormValues.title || '' %>"
+            class="<%= goalFormErrors.title ? 'error' : '' %>"
+            required
+          />
+          <% if (goalFormErrors.title) { %>
+            <p class="field-error"><%= goalFormErrors.title %></p>
+          <% } %>
+
+          <div class="form-grid">
+            <div>
+              <label for="goalTargetMinutes">Target focus minutes</label>
+              <input
+                type="number"
+                id="goalTargetMinutes"
+                name="targetFocusMinutes"
+                min="30"
+                max="600"
+                step="15"
+                value="<%= goalFormValues.targetFocusMinutes || 90 %>"
+                class="<%= goalFormErrors.targetFocusMinutes ? 'error' : '' %>"
+                required
+              />
+              <% if (goalFormErrors.targetFocusMinutes) { %>
+                <p class="field-error"><%= goalFormErrors.targetFocusMinutes %></p>
+              <% } %>
+            </div>
+
+            <div>
+              <label for="goalDueDate">Due date</label>
+              <input
+                type="date"
+                id="goalDueDate"
+                name="dueDate"
+                value="<%= goalFormValues.dueDate || '' %>"
+                class="<%= goalFormErrors.dueDate ? 'error' : '' %>"
+                required
+              />
+              <% if (goalFormErrors.dueDate) { %>
+                <p class="field-error"><%= goalFormErrors.dueDate %></p>
+              <% } %>
+            </div>
+
+            <div>
+              <label for="goalPriority">Priority</label>
+              <select
+                id="goalPriority"
+                name="priority"
+                class="<%= goalFormErrors.priority ? 'error' : '' %>"
+                required
+              >
+                <option value="">Select priority</option>
+                <% goalPriorityOptions.forEach(function(option) { %>
+                  <option
+                    value="<%= option %>"
+                    <%= goalFormValues.priority === option ? 'selected' : '' %>
+                  >
+                    <%= option %>
+                  </option>
+                <% }) %>
+              </select>
+              <% if (goalFormErrors.priority) { %>
+                <p class="field-error"><%= goalFormErrors.priority %></p>
+              <% } %>
+            </div>
+          </div>
+
+          <label for="goalNotes">
+            Notes <span class="label-note">(Optional)</span>
+          </label>
+          <textarea
+            id="goalNotes"
+            name="notes"
+            rows="3"
+            maxlength="160"
+            class="<%= goalFormErrors.notes ? 'error' : '' %>"
+          ><%= goalFormValues.notes || '' %></textarea>
+          <% if (goalFormErrors.notes) { %>
+            <p class="field-error"><%= goalFormErrors.notes %></p>
+          <% } %>
+
+          <div class="checkbox-row">
+            <input
+              type="checkbox"
+              id="goalReminder"
+              name="setReminder"
+              <%= goalFormValues.setReminder ? 'checked' : '' %>
+            />
+            <label for="goalReminder">Send me a reminder the day before</label>
+          </div>
+
+          <button class="button primary" type="submit">Save goal</button>
+        </form>
+      </article>
     </section>
   </main>
 

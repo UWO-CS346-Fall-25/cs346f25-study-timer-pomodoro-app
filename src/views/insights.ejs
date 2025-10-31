@@ -29,6 +29,13 @@
         <p class="metric-value"><%= insights.latestMood %></p>
         <p class="metric-caption">Latest reflection pulled from your focus queue.</p>
       </article>
+      <article class="metric-card">
+        <h2>Active goals</h2>
+        <p class="metric-value"><%= goalSnapshot.total %></p>
+        <p class="metric-caption">
+          <%= goalSnapshot.highPriority %> high priority · <%= goalSnapshot.nextDueLabel %>
+        </p>
+      </article>
     </section>
 
     <section class="insight-grid">
@@ -61,6 +68,28 @@
         <p class="prompt-note">
           These prompts will eventually anchor guided journaling between sessions.
         </p>
+      </article>
+
+      <article>
+        <h2>Goal timeline</h2>
+        <% if (!goals || goals.length === 0) { %>
+          <p class="empty-state">Add a focus goal to start tracking upcoming milestones.</p>
+        <% } else { %>
+          <ul class="goal-timeline" id="insightGoalList">
+            <% goals.forEach((goal) => { %>
+              <li data-goal-id="<%= goal.id %>">
+                <h3><%= goal.title %></h3>
+                <p>
+                  <strong><%= goal.priority %></strong> priority
+                  · <%= goal.targetFocusMinutes %> min target · due
+                  <time datetime="<%= goal.dueDate %>">
+                    <%= new Date(goal.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                  </time>
+                </p>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
       </article>
     </section>
   </main>
