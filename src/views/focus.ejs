@@ -4,7 +4,7 @@
 
   <main class="container">
     <section class="page-intro">
-      <h1>Focus sessions planner</h1>
+      <h1 class="with-icon">Focus sessions planner <i class="icon" data-lucide="book-open-check"></i></h1>
       <p>
         Draft, launch, and record your upcoming study sprints. Adjust presets, fine-tune intervals, and
         log completed sessions so the rest of FocusFlow can surface insights.
@@ -23,7 +23,7 @@
         </p>
         <div class="timer-display" id="timerDisplay">25:00</div>
         <div class="timer-controls">
-          <button class="button primary" type="button">Start</button>
+          <button class="button primary" type="button">Start </button>
           <button class="button ghost" type="button">Pause</button>
           <button class="button ghost" type="button">Reset</button>
         </div>
@@ -35,7 +35,10 @@
       </div>
 
       <aside class="preset-panel">
-        <h2>Quick presets</h2>
+        <h2 class="with-icon">
+            <i class="icon" data-lucide="arrow-left"></i>
+          Quick presets
+        </h2>
         <ul>
           <% focusPresets.forEach((preset, i) => { %>
             <li>
@@ -45,6 +48,7 @@
                 data-break="<%= preset.break %>"
                 data-cycles="<%= preset.cycles %>"
                 type="button"
+
               >
                 <span class="preset-name"><%= preset.label %></span>
                 <span class="preset-details">
@@ -62,7 +66,7 @@
 
     <section class="schedule-grid">
       <article>
-        <h2>Session queue</h2>
+        <h2 class="with-icon">Session queue <i class="icon" data-lucide="clock-check"></i></h2>
         <ul class="session-list" id="sessionList">
           <% if (sessions.length === 0) { %>
             <li class="empty-state">
@@ -94,7 +98,7 @@
       </article>
 
       <article>
-        <h2>Checkpoint checklist</h2>
+        <h2 class="with-icon">Checkpoint checklist <i class="icon" data-lucide="check-line"></i></h2>
         <ul class="checklist">
           <li>Define your study intention for this block</li>
           <li>Silence notifications and set ambient sound</li>
@@ -104,7 +108,7 @@
       </article>
 
       <article>
-        <h2>Add a session to your queue</h2>
+        <h2>Add a session to your queue </h2>
         <form
           id="addSessionForm"
           action="/focus/sessions"
@@ -184,22 +188,29 @@
             </div>
           </div>
 
-          <label for="mood">How are you feeling?</label>
-          <input
-            type="text"
+          <label for="mood">
+            How are you feeling?
+            <span class="label-note">(Optional note)</span>
+          </label>
+          <select
             id="mood"
             name="mood"
-            maxlength="40"
-            value="<%= formValues.mood || '' %>"
-            placeholder="Optional note (e.g., Focused, Calm)"
-          />
+            class="<%= formErrors.mood ? 'error' : '' %>"
+          >
+            <option value="">Select your mood</option>
+            <% const moodOptions = ['Focused', 'Calm', 'Motivated', 'Tired', 'Stressed', 'Energized', 'Steady']; %>
+              <% moodOptions.forEach(function(m) { %>
+                <option value="<%= m %>" <%= (formValues.mood === m) ? 'selected' : '' %>><%= m %></option>
+              <% }) %>
+          </select>
+
 
           <button class="button primary" type="submit">Add session</button>
         </form>
       </article>
 
       <article>
-        <h2>Today at a glance</h2>
+        <h2 class="with-icon"> Today at a glance <i class="icon" data-lucide="loader"></i> </h2>
         <ul class="summary-list" id="sessionSummary">
           <li>
             <strong>Total focus minutes:</strong>
@@ -214,6 +225,157 @@
             <span data-summary="average"><%= summary.averageFocusBlock || 0 %> minutes</span>
           </li>
         </ul>
+      </article>
+
+      <article>
+        <h2 class="with-icon">Upcoming focus goals <i class="icon" data-lucide="zoom-in"></i></h2>
+        <ul class="goal-list" id="focusGoalsList">
+          <% if (!goals || goals.length === 0) { %>
+            <li class="empty-state">No goals scheduled yet. Add one to guide your next deep work block.</li>
+          <% } else { %>
+            <% goals.forEach((goal) => { %>
+              <li data-goal-id="<%= goal.id %>">
+                <div class="goal-item">
+                  <h3><%= goal.title %></h3>
+                  <p class="goal-meta">
+                    <span data-goal-priority="<%= goal.priority.toLowerCase() %>"><%= goal.priority %> priority</span>
+                    ·
+                    <time datetime="<%= goal.dueDate %>">
+                      Due
+                      <%= new Date(goal.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                    </time>
+                  </p>
+                  <p class="goal-notes">
+                    <strong>Focus target:</strong> <%= goal.targetFocusMinutes %> minutes
+                    <% if (goal.setReminder) { %>
+                      · Reminder enabled
+                    <% } %>
+                    <% if (goal.notes) { %>
+                      <br />
+                      <span><%= goal.notes %></span>
+                    <% } %>
+                  </p>
+                </div>
+              </li>
+            <% }); %>
+          <% } %>
+        </ul>
+      </article>
+
+      <article>
+        <h2 class="with-icon">Plan a focus goal <i class="icon" data-lucide="circle-check"></i></h2>
+
+        <p class="form-intro">
+          Capture the study target you want to hit this week. These goals power the insights view and upcoming reminders.
+        </p>
+        <form
+          id="addGoalForm"
+          action="/focus/goals"
+          method="POST"
+          class="goal-form"
+          novalidate
+          data-goal-form
+        >
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+          <label for="goalTitle">Goal title</label>
+          <input
+            type="text"
+            id="goalTitle"
+            name="title"
+            maxlength="80"
+            value="<%= goalFormValues.title || '' %>"
+            class="<%= goalFormErrors.title ? 'error' : '' %>"
+            required
+          />
+          <% if (goalFormErrors.title) { %>
+            <p class="field-error"><%= goalFormErrors.title %></p>
+          <% } %>
+
+          <div class="form-grid">
+            <div>
+              <label for="goalTargetMinutes">Target focus minutes</label>
+              <input
+                type="number"
+                id="goalTargetMinutes"
+                name="targetFocusMinutes"
+                min="30"
+                max="600"
+                step="15"
+                value="<%= goalFormValues.targetFocusMinutes || 90 %>"
+                class="<%= goalFormErrors.targetFocusMinutes ? 'error' : '' %>"
+                required
+              />
+              <% if (goalFormErrors.targetFocusMinutes) { %>
+                <p class="field-error"><%= goalFormErrors.targetFocusMinutes %></p>
+              <% } %>
+            </div>
+
+            <div>
+              <label for="goalDueDate">Due date</label>
+              <input
+                type="date"
+                id="goalDueDate"
+                name="dueDate"
+                value="<%= goalFormValues.dueDate || '' %>"
+                class="<%= goalFormErrors.dueDate ? 'error' : '' %>"
+                required
+              />
+              <% if (goalFormErrors.dueDate) { %>
+                <p class="field-error"><%= goalFormErrors.dueDate %></p>
+              <% } %>
+            </div>
+
+            <div>
+              <label for="goalPriority">Priority</label>
+              <select
+                id="goalPriority"
+                name="priority"
+                class="<%= goalFormErrors.priority ? 'error' : '' %>"
+                required
+              >
+                <option value="">Select priority</option>
+                <% goalPriorityOptions.forEach(function(option) { %>
+                  <option
+                    value="<%= option %>"
+                    <%= goalFormValues.priority === option ? 'selected' : '' %>
+                  >
+                    <%= option %>
+                  </option>
+                <% }) %>
+              </select>
+              <% if (goalFormErrors.priority) { %>
+                <p class="field-error"><%= goalFormErrors.priority %></p>
+              <% } %>
+            </div>
+          </div>
+
+          <label for="goalNotes">
+            Notes <span class="label-note">(Optional)</span>
+          </label>
+          <textarea
+            id="goalNotes"
+            name="notes"
+            rows="3"
+            maxlength="160"
+            class="<%= goalFormErrors.notes ? 'error' : '' %>"
+          ><%= goalFormValues.notes || '' %></textarea>
+          <% if (goalFormErrors.notes) { %>
+            <p class="field-error"><%= goalFormErrors.notes %></p>
+          <% } %>
+
+          <div class="checkbox-row">
+            <input
+              type="checkbox"
+              id="goalReminder"
+              name="setReminder"
+              <%= goalFormValues.setReminder ? 'checked' : '' %>
+            />
+            <label for="goalReminder">Send me a reminder the day before</label>
+          </div>
+
+          <button class="button primary" type="submit">Save goal</button>
+        </form>
       </article>
     </section>
   </main>
