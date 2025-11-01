@@ -23,10 +23,11 @@ app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
+        'default-src': ["'self'"],
+        'style-src': ["'self'", "'unsafe-inline'"],
+        'script-src': ["'self'", 'https://unpkg.com'],
+        'script-src-elem': ["'self'", 'https://unpkg.com'],
+        'img-src': ["'self'", 'data:', 'https:'],
       },
     },
   })
@@ -103,7 +104,7 @@ app.use((req, res) => {
 });
 
 // Error handler
-// eslint-disable-next-line no-unused-vars
+
 app.use((err, req, res, _next) => {
   // Log error in development
   if (process.env.NODE_ENV === 'development') {

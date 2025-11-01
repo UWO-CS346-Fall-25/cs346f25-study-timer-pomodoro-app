@@ -4,7 +4,7 @@
 
   <main class="container">
     <section class="page-intro">
-      <h1>Focus sessions planner</h1>
+      <h1 class="with-icon">Focus sessions planner <i class="icon" data-lucide="book-open-check"></i></h1>
       <p>
         Draft, launch, and record your upcoming study sprints. Adjust presets, fine-tune intervals, and
         log completed sessions so the rest of FocusFlow can surface insights.
@@ -23,7 +23,7 @@
         </p>
         <div class="timer-display" id="timerDisplay">25:00</div>
         <div class="timer-controls">
-          <button class="button primary" type="button">Start</button>
+          <button class="button primary" type="button">Start </button>
           <button class="button ghost" type="button">Pause</button>
           <button class="button ghost" type="button">Reset</button>
         </div>
@@ -35,7 +35,10 @@
       </div>
 
       <aside class="preset-panel">
-        <h2>Quick presets</h2>
+        <h2 class="with-icon">
+            <i class="icon" data-lucide="arrow-left"></i>
+          Quick presets
+        </h2>
         <ul>
           <% focusPresets.forEach((preset, i) => { %>
             <li>
@@ -45,6 +48,7 @@
                 data-break="<%= preset.break %>"
                 data-cycles="<%= preset.cycles %>"
                 type="button"
+
               >
                 <span class="preset-name"><%= preset.label %></span>
                 <span class="preset-details">
@@ -62,7 +66,7 @@
 
     <section class="schedule-grid">
       <article>
-        <h2>Session queue</h2>
+        <h2 class="with-icon">Session queue <i class="icon" data-lucide="clock-check"></i></h2>
         <ul class="session-list" id="sessionList">
           <% if (sessions.length === 0) { %>
             <li class="empty-state">
@@ -94,7 +98,7 @@
       </article>
 
       <article>
-        <h2>Checkpoint checklist</h2>
+        <h2 class="with-icon">Checkpoint checklist <i class="icon" data-lucide="check-line"></i></h2>
         <ul class="checklist">
           <li>Define your study intention for this block</li>
           <li>Silence notifications and set ambient sound</li>
@@ -104,7 +108,7 @@
       </article>
 
       <article>
-        <h2>Add a session to your queue</h2>
+        <h2>Add a session to your queue </h2>
         <form
           id="addSessionForm"
           action="/focus/sessions"
@@ -206,7 +210,7 @@
       </article>
 
       <article>
-        <h2>Today at a glance</h2>
+        <h2 class="with-icon"> Today at a glance <i class="icon" data-lucide="loader"></i> </h2>
         <ul class="summary-list" id="sessionSummary">
           <li>
             <strong>Total focus minutes:</strong>
@@ -224,7 +228,7 @@
       </article>
 
       <article>
-        <h2>Upcoming focus goals</h2>
+        <h2 class="with-icon">Upcoming focus goals <i class="icon" data-lucide="zoom-in"></i></h2>
         <ul class="goal-list" id="focusGoalsList">
           <% if (!goals || goals.length === 0) { %>
             <li class="empty-state">No goals scheduled yet. Add one to guide your next deep work block.</li>
@@ -259,7 +263,8 @@
       </article>
 
       <article>
-        <h2>Plan a focus goal</h2>
+        <h2 class="with-icon">Plan a focus goal <i class="icon" data-lucide="circle-check"></i></h2>
+
         <p class="form-intro">
           Capture the study target you want to hit this week. These goals power the insights view and upcoming reminders.
         </p>

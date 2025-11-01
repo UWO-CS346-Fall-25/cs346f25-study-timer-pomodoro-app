@@ -935,6 +935,9 @@ body.theme-lightning .site-footer,
   }
 }
 
+/* --------------------------------------------- */
+/* Toastify                                      */
+/* --------------------------------------------- */
 .toastify.ff-toast.ff-toast--success {
   background: linear-gradient(90deg, #16a34a, #3dc944) !important;
   color: #fff !important;
@@ -970,4 +973,21 @@ body.theme-lightning .site-footer,
     transform: scaleX(0);
     opacity: 0.5;
   }
+}
+
+/* --------------------------------------------- */
+/* Lucide Icons                                  */
+/* --------------------------------------------- */
+.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.lucide {
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: middle;
+  stroke-width: 2px;
 }

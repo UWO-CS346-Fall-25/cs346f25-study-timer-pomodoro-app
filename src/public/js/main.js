@@ -16,12 +16,31 @@
  * - Event handling
  */
 
+function isPage(id) {
+  return document.body.classList.contains('page-' + id);
+}
+
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Application initialized');
+  try {
+    initFormValidation();
+  } catch (e) {
+    console.error('initFormValidation failed:', e);
+  }
 
-  initFormValidation();
-  initInteractiveElements();
+  try {
+    initInteractiveElements(); 
+  } catch (e) {
+    console.error('initInteractiveElements failed:', e);
+  }
+});
+
+window.addEventListener('load', function () {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    console.log('Calling lucide.createIcons() on window load');
+    window.lucide.createIcons();
+  }
 });
 
 const STORAGE_KEYS = {

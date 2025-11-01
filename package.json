@@ -29,6 +29,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.2",
     "helmet": "^8.1.0",
+    "lucide": "^0.552.0",
     "pg": "^8.16.3",
     "toastify-js": "^1.12.0"
   },
