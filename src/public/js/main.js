@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 /* eslint-env browser, es2021*/
-/* global localStorage */
+/* global localStorage, FormValidator, NotificationCenter */
 /**
 
 /**
@@ -24,7 +24,7 @@ function isPage(id) {
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Application initialized');
   try {
-    initFormValidation();
+    FormValidator.init();
   } catch (e) {
     console.error('initFormValidation failed:', e);
   }
@@ -86,136 +86,137 @@ function markActiveQueueButton(id) {
 }
 
 /**
- * Initialize form validation
+ * FormValidator centralizes client-side validation helpers so the logic is
+ * easier to reuse between the session and goal forms.
  */
-function initFormValidation() {
-  const forms = document.querySelectorAll('form[data-validate]');
+const FormValidator = {
+  /**
+   * Attach submit listeners to any form that requests validation.
+   */
+  init() {
+    const forms = document.querySelectorAll('form[data-validate]');
+    forms.forEach((form) => {
+      form.addEventListener('submit', (event) => {
+        if (!FormValidator.validate(form)) {
+          event.preventDefault();
+        }
+      });
+    });
+  },
 
-  forms.forEach((form) => {
-    form.addEventListener('submit', function (e) {
-      if (!validateForm(form)) {
-        e.preventDefault();
+  /**
+   * Validate a form and surface inline errors.
+   * @param {HTMLFormElement} form
+   * @returns {boolean} true when the form passes validation
+   */
+  validate(form) {
+    let isValid = true;
+    const requiredFields = form.querySelectorAll('[required]');
+
+    requiredFields.forEach((field) => {
+      if (!field.value.trim()) {
+        FormValidator.showError(field, 'This field is required');
+        isValid = false;
+      } else {
+        FormValidator.clearError(field);
       }
     });
-  });
-}
 
-/**
- * Validate a form
- * @param {HTMLFormElement} form - Form element to validate
- * @returns {boolean} - True if form is valid
- */
-function validateForm(form) {
-  let isValid = true;
-  const requiredFields = form.querySelectorAll('[required]');
+    const title = form.querySelector('#title');
+    const focus = form.querySelector('#focusMinutes');
+    const brk = form.querySelector('#breakMinutes');
+    const cycles = form.querySelector('#cycles');
 
-  requiredFields.forEach((field) => {
-    if (!field.value.trim()) {
-      showError(field, 'This field is required');
-      isValid = false;
-    } else {
-      clearError(field);
+    if (title) {
+      const trimmedTitle = title.value.trim();
+      if (trimmedTitle.length > 60) {
+        FormValidator.showError(title, 'Title must be 60 characters or fewer');
+        isValid = false;
+      } else if (trimmedTitle.length > 0) {
+        FormValidator.clearError(title);
+      }
     }
-  });
 
-  const title = form.querySelector('#title');
-  const focus = form.querySelector('#focusMinutes');
-  const brk = form.querySelector('#breakMinutes');
-  const cycles = form.querySelector('#cycles');
+    const asInt = (el) => parseInt(el && el.value, 10);
 
-  if (title) {
-    const trimmedTitle = title.value.trim();
-    if (trimmedTitle.length > 60) {
-      showError(title, 'Title must be 60 characters or fewer');
-      isValid = false;
-    } else if (trimmedTitle.length > 0) {
-      clearError(title);
+    if (focus) {
+      const n = asInt(focus);
+      if (Number.isNaN(n) || n < 10 || n > 90) {
+        FormValidator.showError(focus, 'Focus minutes must be between 10 and 90');
+        isValid = false;
+      } else {
+        FormValidator.clearError(focus);
+      }
     }
-  }
 
-  const asInt = (el) => parseInt(el && el.value, 10);
-
-  if (focus) {
-    const n = asInt(focus);
-    if (Number.isNaN(n) || n < 10 || n > 90) {
-      showError(focus, 'Focus minutes must be between 10 and 90');
-      isValid = false;
-    } else {
-      clearError(focus);
+    if (brk) {
+      const n = asInt(brk);
+      if (Number.isNaN(n) || n < 3 || n > 30) {
+        FormValidator.showError(brk, 'Break minutes must be between 3 and 30');
+        isValid = false;
+      } else {
+        FormValidator.clearError(brk);
+      }
     }
-  }
 
-  if (brk) {
-    const n = asInt(brk);
-    if (Number.isNaN(n) || n < 3 || n > 30) {
-      showError(brk, 'Break minutes must be between 3 and 30');
-      isValid = false;
-    } else {
-      clearError(brk);
+    if (cycles) {
+      const n = asInt(cycles);
+      if (Number.isNaN(n) || n < 1 || n > 8) {
+        FormValidator.showError(cycles, 'Cycles must be between 1 and 8');
+        isValid = false;
+      } else {
+        FormValidator.clearError(cycles);
+      }
     }
-  }
 
-  if (cycles) {
-    const n = asInt(cycles);
-    if (Number.isNaN(n) || n < 1 || n > 8) {
-      showError(cycles, 'Cycles must be between 1 and 8');
-      isValid = false;
-    } else {
-      clearError(cycles);
-    }
-  }
+    return isValid;
+  },
 
-  return isValid;
-}
+  /**
+   * Display an error message next to a field.
+   * @param {HTMLElement} field
+   * @param {string} message
+   * @param {boolean} isServer When true, marks the message so it can be cleared on resubmit.
+   */
+  showError(field, message, isServer = false) {
+    FormValidator.clearError(field);
 
-/**
- * Show error message for a field
- * @param {HTMLElement} field - Form field
- * @param {string} message - Error message
- */
-function showError(field, message, isServer = false) {
-  // Remove any existing error
-  clearError(field);
+    const error = document.createElement('div');
+    error.className = 'error-message';
+    if (isServer) error.classList.add('server-error');
+    error.textContent = message;
+    error.style.color = 'red';
+    error.style.fontSize = '0.875rem';
+    error.style.marginTop = '0.25rem';
 
-  // Create error element
-  const error = document.createElement('div');
-  error.className = 'error-message';
-  if (isServer) {
-    error.classList.add('server-error');
-  }
-  error.textContent = message;
-  error.style.color = 'red';
-  error.style.fontSize = '0.875rem';
-  error.style.marginTop = '0.25rem';
+    field.parentNode.insertBefore(error, field.nextSibling);
+    field.classList.add('error');
+    field.style.borderColor = 'red';
+  },
 
-  // Insert after field
-  field.parentNode.insertBefore(error, field.nextSibling);
+  /**
+   * Remove any inline error message for a field.
+   * @param {HTMLElement} field
+   */
+  clearError(field) {
+    const error = field.parentNode.querySelector('.error-message');
+    if (error) error.remove();
+    field.classList.remove('error');
+    field.style.borderColor = '';
+  },
 
-  // Add error class to field
-  field.classList.add('error');
-  field.style.borderColor = 'red';
-}
-
-/**
- * Clear error message for a field
- * @param {HTMLElement} field - Form field
- */
-function clearError(field) {
-  const error = field.parentNode.querySelector('.error-message');
-  if (error) {
-    error.remove();
-  }
-  field.classList.remove('error');
-  field.style.borderColor = '';
-}
-
-function clearServerErrors(form) {
-  form.querySelectorAll('.server-error').forEach((msg) => msg.remove());
-  form.querySelectorAll('.error').forEach((input) => {
-    input.classList.remove('error');
-    input.style.borderColor = '';
-  });
-}
+  /**
+   * Remove server-side validation messages persisted from a previous submit.
+   * @param {HTMLFormElement} form
+   */
+  clearServerErrors(form) {
+    form.querySelectorAll('.server-error').forEach((msg) => msg.remove());
+    form.querySelectorAll('.error').forEach((input) => {
+      input.classList.remove('error');
+      input.style.borderColor = '';
+    });
+  },
+};
 
 /**
  * Initialize interactive elements
@@ -550,8 +551,8 @@ function initInteractiveElements() {
 
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
-      clearServerErrors(form);
-      if (!validateForm(form)) return;
+      FormValidator.clearServerErrors(form);
+      if (!FormValidator.validate(form)) return;
 
       const formData = new FormData(form);
       const csrfToken = formData.get('_csrf') || '';
@@ -580,9 +581,9 @@ function initInteractiveElements() {
           const errors = payload.errors || {};
           Object.entries(errors).forEach(([field, message]) => {
             const el = form.querySelector(`[name="${field}"]`);
-            if (el) showError(el, message, true);
+            if (el) FormValidator.showError(el, message, true);
           });
-          showNotification('Please fix the highlighted fields.', 'error');
+          NotificationCenter.show('Please fix the highlighted fields.', 'error');
           return;
         }
 
@@ -596,7 +597,7 @@ function initInteractiveElements() {
         payload = await response.json();
 
         form.reset();
-        showNotification('Session added to your queue.', 'success');
+        NotificationCenter.show('Session added to your queue.', 'success');
 
         const session = payload.session;
         if (session) {
@@ -637,7 +638,7 @@ function initInteractiveElements() {
         await refreshSessions();
       } catch (error) {
         console.error('Failed to save session', error);
-        showNotification('Could not save session. Please try again.', 'error');
+        NotificationCenter.show('Could not save session. Please try again.', 'error');
       }
     });
   })();
@@ -676,9 +677,9 @@ function initInteractiveElements() {
 
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
-      clearServerErrors(form);
+      FormValidator.clearServerErrors(form);
 
-      if (!validateForm(form)) return;
+      if (!FormValidator.validate(form)) return;
 
       const fd = new FormData(form);
       const csrf = fd.get('_csrf') || '';
@@ -704,9 +705,9 @@ function initInteractiveElements() {
           const { errors = {} } = await res.json().catch(() => ({}));
           Object.entries(errors).forEach(([name, msg]) => {
             const el = form.querySelector(`[name="${name}"]`);
-            if (el) showError(el, msg, true);
+            if (el) FormValidator.showError(el, msg, true);
           });
-          showNotification('Please fix the highlighted fields.', 'error');
+          NotificationCenter.show('Please fix the highlighted fields.', 'error');
           return;
         }
 
@@ -729,10 +730,10 @@ function initInteractiveElements() {
         }
 
         form.reset();
-        showNotification('Goal successfully added!', 'success');
+        NotificationCenter.show('Goal successfully added!', 'success');
       } catch (err) {
         console.error('Save goal failed', err);
-        showNotification('Could not save goal. Please try again.', 'error');
+        NotificationCenter.show('Could not save goal. Please try again.', 'error');
       }
     });
   })();
@@ -858,74 +859,10 @@ async function refreshSessions(prefetched) {
     return payload;
   } catch (error) {
     console.error('Could not refresh sessions', error);
-    showNotification(
+    NotificationCenter.show(
       'Unable to refresh the session queue. Please reload.',
       'warning'
     );
     throw error;
   }
 }
-
-/**
- * Display a notification message
- * @param {string} message - Message to display
- * @param {string} type - Type of message (success, error, info, warning)
- */
-function showNotification(message, type = 'info') {
-  const palette = {
-    success: '#16a34a',
-    error: '#dc2626',
-    warning: '#f97316',
-    info: '#2563eb',
-  };
-
-  if (typeof Toastify === 'function') {
-    Toastify({
-      text: message,
-      duration: 3500,
-      gravity: 'top',
-      position: 'right',
-      stopOnFocus: true,
-      close: true,
-      className: `ff-toast ff-toast--${type}`,
-      style: {
-        background:
-          type === 'success'
-            ? 'linear-gradient(90deg,#00b09b,#96c93d)'
-            : palette[type] || palette.info,
-        color: '#ffffff',
-        boxShadow: '0 10px 25px -15px rgba(15, 23, 42, 0.6)',
-        borderRadius: '999px',
-        padding: '0.85rem 1.5rem',
-      },
-      offset: {
-        x: 20,
-        y: 20,
-      },
-    }).showToast();
-    return;
-  }
-
-  // Fallback for environments where Toastify is unavailable
-  const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  notification.textContent = message;
-  notification.style.position = 'fixed';
-  notification.style.top = '20px';
-  notification.style.right = '20px';
-  notification.style.padding = '1rem';
-  notification.style.borderRadius = '999px';
-  notification.style.backgroundColor = palette[type] || palette.info;
-  notification.style.color = '#ffffff';
-  notification.style.zIndex = '1000';
-  notification.style.boxShadow = '0 10px 25px -15px rgba(15, 23, 42, 0.6)';
-
-  document.body.appendChild(notification);
-
-  setTimeout(() => {
-    notification.remove();
-  }, 3500);
-}
-
-// Export functions if using modules
-// export { validateForm, makeRequest, showNotification };
