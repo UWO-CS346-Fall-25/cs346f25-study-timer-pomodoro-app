@@ -93,9 +93,33 @@ Week 8 focuses on the interactive Focus Sessions flow and basic server logic.
 
 Week 9 focuses on front-end polish, form design, and usability improvements.
 
+## What we already cover
+- Focus session form already meets the 3+ input types + validation requirement (`src/views/focus.ejs`, `src/public/js/main.js`, `POST /focus/sessions`).
+- Routes/controllers already capture submissions and return JSON (`src/controllers/indexController.js`).
+- Base UI has gradients, active states, and responsive grids from Deliverable 2 (`src/public/css/style.css`).
+
+## Split
+**Ab**
+- Keep `feature/week9-ui-enhancements` in sync with `main`
+- Build the goal endpoints (`POST /focus/goals`, `/api/goals`) plus the supporting model `src/models/goalStore.js`; continue to expose any extra data modifications Dasha needs.
+- Wire any additional template placeholders or partials needed for the UI polish (e.g., hero copy, modals) and keep MVC tidy.
+- Refresh README once Dasha finishes visuals and drop the proof assets into `docs/` before the PR.
+
+**Dasha**
+- Does the front-end polish: integrate the selected UI improvements (animations, spacing, responsive adjustments) in `src/public/css/style.css` and `src/public/js/main.js`.
+- Pull in Lucide icons and Toastify (or the final two choices) and apply them to the focus/insights pages.
+- Capture the Week 9 screenshots or a short clip for the PR + README.
+
+## New Improvements description and screenshots
 - Added 3 input types in session queue form (input, number, and drop down menu)
 - Integrated CSS background, header, and footer transitions and animations when quick presets buttons are clicked
 - Updated button clicks by adding a transition to show when a button is pressed
+- Added Toastify notifications to improve the notification visuals
+- Added Lucide Icons to create a visually appealing website
+
+![Toastify Notification](toastifyNotification.png)
+![Lucide Icons](lucideIconExample.png)
+![Lucide Icons](lucidIconExample2.png)
 
 ## Project Structure
 
