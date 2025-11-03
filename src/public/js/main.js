@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 /* eslint-env browser, es2021*/
-/* global localStorage */
+/* global localStorage, FormValidator, NotificationCenter */
 /**
 
 /**
@@ -16,12 +16,31 @@
  * - Event handling
  */
 
+function isPage(id) {
+  return document.body.classList.contains('page-' + id);
+}
+
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Application initialized');
+  try {
+    FormValidator.init();
+  } catch (e) {
+    console.error('initFormValidation failed:', e);
+  }
 
-  initFormValidation();
-  initInteractiveElements();
+  try {
+    initInteractiveElements(); 
+  } catch (e) {
+    console.error('initInteractiveElements failed:', e);
+  }
+});
+
+window.addEventListener('load', function () {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    console.log('Calling lucide.createIcons() on window load');
+    window.lucide.createIcons();
+  }
 });
 
 const STORAGE_KEYS = {
@@ -67,136 +86,137 @@ function markActiveQueueButton(id) {
 }
 
 /**
- * Initialize form validation
+ * FormValidator centralizes client-side validation helpers so the logic is
+ * easier to reuse between the session and goal forms.
  */
-function initFormValidation() {
-  const forms = document.querySelectorAll('form[data-validate]');
+const FormValidator = {
+  /**
+   * Attach submit listeners to any form that requests validation.
+   */
+  init() {
+    const forms = document.querySelectorAll('form[data-validate]');
+    forms.forEach((form) => {
+      form.addEventListener('submit', (event) => {
+        if (!FormValidator.validate(form)) {
+          event.preventDefault();
+        }
+      });
+    });
+  },
 
-  forms.forEach((form) => {
-    form.addEventListener('submit', function (e) {
-      if (!validateForm(form)) {
-        e.preventDefault();
+  /**
+   * Validate a form and surface inline errors.
+   * @param {HTMLFormElement} form
+   * @returns {boolean} true when the form passes validation
+   */
+  validate(form) {
+    let isValid = true;
+    const requiredFields = form.querySelectorAll('[required]');
+
+    requiredFields.forEach((field) => {
+      if (!field.value.trim()) {
+        FormValidator.showError(field, 'This field is required');
+        isValid = false;
+      } else {
+        FormValidator.clearError(field);
       }
     });
-  });
-}
 
-/**
- * Validate a form
- * @param {HTMLFormElement} form - Form element to validate
- * @returns {boolean} - True if form is valid
- */
-function validateForm(form) {
-  let isValid = true;
-  const requiredFields = form.querySelectorAll('[required]');
+    const title = form.querySelector('#title');
+    const focus = form.querySelector('#focusMinutes');
+    const brk = form.querySelector('#breakMinutes');
+    const cycles = form.querySelector('#cycles');
 
-  requiredFields.forEach((field) => {
-    if (!field.value.trim()) {
-      showError(field, 'This field is required');
-      isValid = false;
-    } else {
-      clearError(field);
+    if (title) {
+      const trimmedTitle = title.value.trim();
+      if (trimmedTitle.length > 60) {
+        FormValidator.showError(title, 'Title must be 60 characters or fewer');
+        isValid = false;
+      } else if (trimmedTitle.length > 0) {
+        FormValidator.clearError(title);
+      }
     }
-  });
 
-  const title = form.querySelector('#title');
-  const focus = form.querySelector('#focusMinutes');
-  const brk = form.querySelector('#breakMinutes');
-  const cycles = form.querySelector('#cycles');
+    const asInt = (el) => parseInt(el && el.value, 10);
 
-  if (title) {
-    const trimmedTitle = title.value.trim();
-    if (trimmedTitle.length > 60) {
-      showError(title, 'Title must be 60 characters or fewer');
-      isValid = false;
-    } else if (trimmedTitle.length > 0) {
-      clearError(title);
+    if (focus) {
+      const n = asInt(focus);
+      if (Number.isNaN(n) || n < 10 || n > 90) {
+        FormValidator.showError(focus, 'Focus minutes must be between 10 and 90');
+        isValid = false;
+      } else {
+        FormValidator.clearError(focus);
+      }
     }
-  }
 
-  const asInt = (el) => parseInt(el && el.value, 10);
-
-  if (focus) {
-    const n = asInt(focus);
-    if (Number.isNaN(n) || n < 10 || n > 90) {
-      showError(focus, 'Focus minutes must be between 10 and 90');
-      isValid = false;
-    } else {
-      clearError(focus);
+    if (brk) {
+      const n = asInt(brk);
+      if (Number.isNaN(n) || n < 3 || n > 30) {
+        FormValidator.showError(brk, 'Break minutes must be between 3 and 30');
+        isValid = false;
+      } else {
+        FormValidator.clearError(brk);
+      }
     }
-  }
 
-  if (brk) {
-    const n = asInt(brk);
-    if (Number.isNaN(n) || n < 3 || n > 30) {
-      showError(brk, 'Break minutes must be between 3 and 30');
-      isValid = false;
-    } else {
-      clearError(brk);
+    if (cycles) {
+      const n = asInt(cycles);
+      if (Number.isNaN(n) || n < 1 || n > 8) {
+        FormValidator.showError(cycles, 'Cycles must be between 1 and 8');
+        isValid = false;
+      } else {
+        FormValidator.clearError(cycles);
+      }
     }
-  }
 
-  if (cycles) {
-    const n = asInt(cycles);
-    if (Number.isNaN(n) || n < 1 || n > 8) {
-      showError(cycles, 'Cycles must be between 1 and 8');
-      isValid = false;
-    } else {
-      clearError(cycles);
-    }
-  }
+    return isValid;
+  },
 
-  return isValid;
-}
+  /**
+   * Display an error message next to a field.
+   * @param {HTMLElement} field
+   * @param {string} message
+   * @param {boolean} isServer When true, marks the message so it can be cleared on resubmit.
+   */
+  showError(field, message, isServer = false) {
+    FormValidator.clearError(field);
 
-/**
- * Show error message for a field
- * @param {HTMLElement} field - Form field
- * @param {string} message - Error message
- */
-function showError(field, message, isServer = false) {
-  // Remove any existing error
-  clearError(field);
+    const error = document.createElement('div');
+    error.className = 'error-message';
+    if (isServer) error.classList.add('server-error');
+    error.textContent = message;
+    error.style.color = 'red';
+    error.style.fontSize = '0.875rem';
+    error.style.marginTop = '0.25rem';
 
-  // Create error element
-  const error = document.createElement('div');
-  error.className = 'error-message';
-  if (isServer) {
-    error.classList.add('server-error');
-  }
-  error.textContent = message;
-  error.style.color = 'red';
-  error.style.fontSize = '0.875rem';
-  error.style.marginTop = '0.25rem';
+    field.parentNode.insertBefore(error, field.nextSibling);
+    field.classList.add('error');
+    field.style.borderColor = 'red';
+  },
 
-  // Insert after field
-  field.parentNode.insertBefore(error, field.nextSibling);
+  /**
+   * Remove any inline error message for a field.
+   * @param {HTMLElement} field
+   */
+  clearError(field) {
+    const error = field.parentNode.querySelector('.error-message');
+    if (error) error.remove();
+    field.classList.remove('error');
+    field.style.borderColor = '';
+  },
 
-  // Add error class to field
-  field.classList.add('error');
-  field.style.borderColor = 'red';
-}
-
-/**
- * Clear error message for a field
- * @param {HTMLElement} field - Form field
- */
-function clearError(field) {
-  const error = field.parentNode.querySelector('.error-message');
-  if (error) {
-    error.remove();
-  }
-  field.classList.remove('error');
-  field.style.borderColor = '';
-}
-
-function clearServerErrors(form) {
-  form.querySelectorAll('.server-error').forEach((msg) => msg.remove());
-  form.querySelectorAll('.error').forEach((input) => {
-    input.classList.remove('error');
-    input.style.borderColor = '';
-  });
-}
+  /**
+   * Remove server-side validation messages persisted from a previous submit.
+   * @param {HTMLFormElement} form
+   */
+  clearServerErrors(form) {
+    form.querySelectorAll('.server-error').forEach((msg) => msg.remove());
+    form.querySelectorAll('.error').forEach((input) => {
+      input.classList.remove('error');
+      input.style.borderColor = '';
+    });
+  },
+};
 
 /**
  * Initialize interactive elements
@@ -227,6 +247,25 @@ function initInteractiveElements() {
   const breakInput = document.getElementById('breakMinutes');
   const cyclesInput = document.getElementById('cycles');
   const titleInput = document.getElementById('title');
+
+  function triggerThemeSweep() {
+    body.classList.add('animate-bg');
+    body.addEventListener(
+      'animationend',
+      (e) => {
+        if (e.animationName === 'bgSweep') body.classList.remove('animate-bg');
+      },
+      { once: true }
+    );
+  }
+
+  document.querySelectorAll('input[type="number"]').forEach((input) => {
+    input.addEventListener('keydown', function (e) {
+      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+  });
 
   const K = STORAGE_KEYS;
   const presetChips = document.querySelectorAll('.preset-panel .chip');
@@ -271,11 +310,12 @@ function initInteractiveElements() {
       else if (label.includes('deep')) body.classList.add('theme-deep');
       else if (label.includes('lightning'))
         body.classList.add('theme-lightning');
+      triggerThemeSweep();
 
       document.querySelectorAll('.queue-item').forEach((item) => {
         item.classList.remove('is-selected');
       });
-      
+
       const labelEl = document.querySelector('.timer-label');
       const presetName =
         btn.querySelector('.preset-name')?.textContent.trim() || 'Custom';
@@ -283,8 +323,7 @@ function initInteractiveElements() {
 
       const presetNameLc = presetName.toLowerCase();
       let normalized = 'classic';
-      if (presetNameLc.includes('deep'))
-        normalized = 'deep work';
+      if (presetNameLc.includes('deep')) normalized = 'deep work';
       else if (presetNameLc.includes('lightning')) normalized = 'lightning';
       localStorage.setItem(K.mode, 'preset');
       localStorage.setItem(K.preset, normalized);
@@ -386,10 +425,8 @@ function initInteractiveElements() {
       );
       if (chip) {
         chip.click();
-        if (savedInterval === 'break')
-          breakBtn?.click();
-        else if (savedInterval === 'long')
-          longBreakBtn?.click();
+        if (savedInterval === 'break') breakBtn?.click();
+        else if (savedInterval === 'long') longBreakBtn?.click();
         else focusBtn?.click();
         return true;
       }
@@ -428,7 +465,6 @@ function initInteractiveElements() {
       localStorage.getItem(K.preset) || 'classic'
     ).toLowerCase();
     if (!selectPresetChip(savedPreset)) {
-
       setActiveInterval(savedInterval);
     }
   })();
@@ -515,8 +551,8 @@ function initInteractiveElements() {
 
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
-      clearServerErrors(form);
-      if (!validateForm(form)) return;
+      FormValidator.clearServerErrors(form);
+      if (!FormValidator.validate(form)) return;
 
       const formData = new FormData(form);
       const csrfToken = formData.get('_csrf') || '';
@@ -545,9 +581,9 @@ function initInteractiveElements() {
           const errors = payload.errors || {};
           Object.entries(errors).forEach(([field, message]) => {
             const el = form.querySelector(`[name="${field}"]`);
-            if (el) showError(el, message, true);
+            if (el) FormValidator.showError(el, message, true);
           });
-          showNotification('Please fix the highlighted fields.', 'error');
+          NotificationCenter.show('Please fix the highlighted fields.', 'error');
           return;
         }
 
@@ -561,7 +597,7 @@ function initInteractiveElements() {
         payload = await response.json();
 
         form.reset();
-        showNotification('Session added to your queue.', 'success');
+        NotificationCenter.show('Session added to your queue.', 'success');
 
         const session = payload.session;
         if (session) {
@@ -571,9 +607,11 @@ function initInteractiveElements() {
           const displayEl =
             document.getElementById('timerDisplay') ||
             document.querySelector('.timer-display');
-          if (labelEl) labelEl.textContent = `Current interval: ${session.title}`;
+          if (labelEl)
+            labelEl.textContent = `Current interval: ${session.title}`;
           if (displayEl)
-            displayEl.textContent = String(session.focusMinutes).padStart(2, '0') + ':00';
+            displayEl.textContent =
+              String(session.focusMinutes).padStart(2, '0') + ':00';
 
           const chipFocus = document.getElementById('chipFocus');
           const chipBreak = document.getElementById('chipBreak');
@@ -600,7 +638,102 @@ function initInteractiveElements() {
         await refreshSessions();
       } catch (error) {
         console.error('Failed to save session', error);
-        showNotification('Could not save session. Please try again.', 'error');
+        NotificationCenter.show('Could not save session. Please try again.', 'error');
+      }
+    });
+  })();
+
+  (function wireGoalForm() {
+    const form =
+      document.getElementById('addGoalForm') ||
+      document.querySelector('form[data-goal-form]');
+    if (!form) return;
+
+    const list = document.getElementById('focusGoalsList');
+
+    function renderGoalLI(goal) {
+      const due = goal.dueDate ? new Date(goal.dueDate) : null;
+      const dueText = due
+        ? `Due ${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : '';
+      const pri = (goal.priority || '').toLowerCase();
+
+      return `
+      <li data-goal-id="${goal.id || crypto?.randomUUID?.() || Date.now()}">
+        <div class="goal-item">
+          <h3>${sanitize(goal.title || 'Goal')}</h3>
+          <p class="goal-meta">
+            <span data-goal-priority="${pri}">${sanitize(goal.priority || 'Normal')} priority</span>
+            · <time datetime="${goal.dueDate || ''}">${dueText}</time>
+          </p>
+          <p class="goal-notes">
+            <strong>Focus target:</strong> ${Number(goal.targetFocusMinutes || 0)} minutes
+            ${goal.setReminder ? ' · Reminder enabled' : ''}
+            ${goal.notes ? `<br><span>${sanitize(goal.notes)}</span>` : ''}
+          </p>
+        </div>
+      </li>`;
+    }
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      FormValidator.clearServerErrors(form);
+
+      if (!FormValidator.validate(form)) return;
+
+      const fd = new FormData(form);
+      const csrf = fd.get('_csrf') || '';
+      const payload = {};
+      fd.forEach((v, k) => (payload[k] = v));
+
+      payload.setReminder = !!fd.get('setReminder');
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'fetch',
+            'X-CSRF-Token': csrf,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload),
+        });
+
+        if (res.status === 422) {
+          const { errors = {} } = await res.json().catch(() => ({}));
+          Object.entries(errors).forEach(([name, msg]) => {
+            const el = form.querySelector(`[name="${name}"]`);
+            if (el) FormValidator.showError(el, msg, true);
+          });
+          NotificationCenter.show('Please fix the highlighted fields.', 'error');
+          return;
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json().catch(() => ({}));
+        const saved = data.goal || {
+          title: payload.title,
+          targetFocusMinutes: payload.targetFocusMinutes,
+          dueDate: payload.dueDate,
+          priority: payload.priority,
+          notes: payload.notes,
+          setReminder: payload.setReminder,
+        };
+
+        if (list) {
+          const empty = list.querySelector('.empty-state');
+          if (empty) empty.remove();
+          list.insertAdjacentHTML('afterbegin', renderGoalLI(saved));
+        }
+
+        form.reset();
+        NotificationCenter.show('Goal successfully added!', 'success');
+      } catch (err) {
+        console.error('Save goal failed', err);
+        NotificationCenter.show('Could not save goal. Please try again.', 'error');
       }
     });
   })();
@@ -726,50 +859,10 @@ async function refreshSessions(prefetched) {
     return payload;
   } catch (error) {
     console.error('Could not refresh sessions', error);
-    showNotification(
+    NotificationCenter.show(
       'Unable to refresh the session queue. Please reload.',
       'warning'
     );
     throw error;
   }
 }
-
-/**
- * Display a notification message
- * @param {string} message - Message to display
- * @param {string} type - Type of message (success, error, info, warning)
- */
-/* eslint-disable no-unused-vars */
-function showNotification(message, type = 'info') {
-  // Create notification element
-  const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  notification.textContent = message;
-  notification.style.position = 'fixed';
-  notification.style.top = '20px';
-  notification.style.right = '20px';
-  notification.style.padding = '1rem';
-  notification.style.borderRadius = '4px';
-  notification.style.backgroundColor =
-    type === 'success'
-      ? '#28a745'
-      : type === 'error'
-        ? '#dc3545'
-        : type === 'warning'
-          ? '#ffc107'
-          : '#17a2b8';
-  notification.style.color = 'white';
-  notification.style.zIndex = '1000';
-  notification.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-
-  // Add to page
-  document.body.appendChild(notification);
-
-  // Remove after 3 seconds
-  setTimeout(() => {
-    notification.remove();
-  }, 3000);
-}
-
-// Export functions if using modules
-// export { validateForm, makeRequest, showNotification };
