@@ -123,8 +123,8 @@ exports.getAbout = async (req, res, next) => {
 
 exports.getFocus = async (req, res, next) => {
   try {
-    const sessions = sessionStore.listSessions();
-    const summary = sessionStore.getSummary();
+    const sessions = await sessionStore.listSessions();
+    const summary = sessionStore.calculateSummary(sessions);
     const values = res.locals.formValues || {
       title: '',
       focusMinutes: '',
@@ -140,6 +140,8 @@ exports.getFocus = async (req, res, next) => {
       notes: '',
       setReminder: false,
     };
+    const goals = await goalStore.listGoals();
+    const goalSnapshot = goalStore.calculateSnapshot(goals);
 
     res.render('focus', {
       title: 'Focus Sessions',
@@ -150,8 +152,8 @@ exports.getFocus = async (req, res, next) => {
       summary,
       formValues: values,
       formErrors: res.locals.formErrors || {},
-      goals: goalStore.listGoals(),
-      goalSnapshot: goalStore.getSnapshot(),
+      goals,
+      goalSnapshot,
       goalFormValues: goalValues,
       goalFormErrors: res.locals.goalFormErrors || {},
       goalPriorityOptions: goalStore.PRIORITY_LEVELS,
@@ -164,8 +166,8 @@ exports.getFocus = async (req, res, next) => {
 
 exports.getInsights = async (req, res, next) => {
   try {
-    const sessions = sessionStore.listSessions();
-    const summary = sessionStore.getSummary();
+    const sessions = await sessionStore.listSessions();
+    const summary = sessionStore.calculateSummary(sessions);
     const recentSessions = sessions.slice(0, 5).map((session) => ({
       id: session.id,
       title: session.title,
@@ -187,7 +189,8 @@ exports.getInsights = async (req, res, next) => {
       totalFocusLabel,
       latestMood: recentSessions.length > 0 ? recentSessions[0].mood : 'Getting started',
     };
-    const goals = goalStore.listGoals();
+    const goals = await goalStore.listGoals();
+    const goalSnapshot = goalStore.calculateSnapshot(goals);
 
     res.render('insights', {
       title: 'Progress Insights',
@@ -198,7 +201,7 @@ exports.getInsights = async (req, res, next) => {
       insights,
       reflectionPrompts,
       goals,
-      goalSnapshot: goalStore.getSnapshot(),
+      goalSnapshot,
       csrfToken: req.csrfToken(),
     });
   } catch (error) {
@@ -211,7 +214,7 @@ exports.createSession = async (req, res, next) => {
   const wantsJson =
     req.get('x-requested-with') === 'fetch' ||
     req.headers.accept?.includes('application/json');
-    const result = sessionStore.addSession(req.body);
+    const result = await sessionStore.addSession(req.body);
 
     if (!result.ok) {
       if (wantsJson) {
@@ -243,7 +246,7 @@ exports.createSession = async (req, res, next) => {
       return res.status(201).json({
         ok: true,
         session: result.session,
-        summary: sessionStore.getSummary(),
+        summary: await sessionStore.getSummary(),
       });
     }
 
@@ -253,11 +256,13 @@ exports.createSession = async (req, res, next) => {
   }
 };
 
-exports.getSessionsJson = (req, res, next) => {
+exports.getSessionsJson = async (req, res, next) => {
   try {
+    const sessions = await sessionStore.listSessions();
+    const summary = sessionStore.calculateSummary(sessions);
     res.json({
-      sessions: sessionStore.listSessions(),
-      summary: sessionStore.getSummary(),
+      sessions,
+      summary,
     });
   } catch (error) {
     next(error);
@@ -269,7 +274,7 @@ exports.createGoal = async (req, res, next) => {
     const wantsJson =
       req.get('x-requested-with') === 'fetch' ||
       req.headers.accept?.includes('application/json');
-    const result = goalStore.addGoal(req.body);
+    const result = await goalStore.addGoal(req.body);
 
     if (!result.ok) {
       if (wantsJson) {
@@ -302,8 +307,8 @@ exports.createGoal = async (req, res, next) => {
       return res.status(201).json({
         ok: true,
         goal: result.goal,
-        goals: goalStore.listGoals(),
-        snapshot: goalStore.getSnapshot(),
+        goals: await goalStore.listGoals(),
+        snapshot: await goalStore.getSnapshot(),
       });
     }
 
@@ -313,11 +318,13 @@ exports.createGoal = async (req, res, next) => {
   }
 };
 
-exports.getGoalsJson = (req, res, next) => {
+exports.getGoalsJson = async (req, res, next) => {
   try {
+    const goals = await goalStore.listGoals();
+    const snapshot = goalStore.calculateSnapshot(goals);
     res.json({
-      goals: goalStore.listGoals(),
-      snapshot: goalStore.getSnapshot(),
+      goals,
+      snapshot,
     });
   } catch (error) {
     next(error);
