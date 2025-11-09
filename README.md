@@ -30,35 +30,22 @@ FocusFlow is our CS346 semester project for building a study timer web applicati
 
    ```bash
    cp .env.example .env
-   # Edit .env with your database credentials
+   # Add Supabase URL, anon key, and service role key
    ```
 
-4. **Set up PostgreSQL database**
+4. **Create Supabase tables**
 
-   ```bash
-   # Create database (adjust credentials as needed)
-   createdb your_database_name
-   ```
+   - Open the Supabase SQL editor and run [`db/migrations/002_create_focus_tables.sql`](db/migrations/002_create_focus_tables.sql)
+     to provision the `focus_sessions` and `focus_goals` tables.
+   - (Optional) keep `db/migrations/001`/`seed.js` for local Postgres development.
 
-5. **Run migrations**
-
-   ```bash
-   npm run migrate
-   ```
-
-6. **Seed database (optional)**
-
-   ```bash
-   npm run seed
-   ```
-
-7. **Start the application**
+5. **Start the application**
 
    ```bash
    npm run dev
    ```
 
-8. **Open your browser**
+6. **Open your browser**
    ```
    http://localhost:3000
    ```
@@ -120,6 +107,14 @@ Week 9 focuses on front-end polish, form design, and usability improvements.
 ![Toastify Notification](toastifyNotification.png)
 ![Lucide Icons](lucideIconExample.png)
 ![Lucide Icons](lucidIconExample2.png)
+
+## Current Pages (Deliverable 4)
+
+Week 10 introduces Supabase-backed persistence so the Focus page forms now read/write real data.
+
+- **Supabase integration** – `src/lib/supabaseClient.js` bootstraps the service role client using the new `.env` values. The `focus_sessions` and `focus_goals` tables are created in supabase.
+- **Repositories** – The in-memory stores were replaced with Supabase repositories (`src/models/sessionStore.js`, `src/models/goalStore.js`). Controllers now `await` the DB results and build summaries/snapshots from live rows.
+- **Forms and APIs** – `/focus/sessions` and `/focus/goals` POST endpoints persist data to Supabase; `/api/sessions` and `/api/goals` stream JSON for the AJAX refresh. Toastify toasts and empty-state messaging now reflect DB current state and results.
 
 ## Project Structure
 

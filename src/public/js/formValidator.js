@@ -38,6 +38,25 @@
         }
       });
 
+      const labelField = form.querySelector('#sessionLabel');
+      if (labelField) {
+        const label = labelField.value.trim();
+        let vowels = 0;
+        for (let i = 0; i < label.length; i++) {
+          const ch = label[i].toLowerCase();
+          if (ch === 'a' || ch === 'e' || ch === 'i' || ch === 'o' || ch === 'u') {
+            vowels = vowels + 1;
+          }
+        }
+
+        if (label.length < 3 || vowels === 0) {
+          FormValidator.showError(labelField, 'Enter a meaningful session name');
+          isValid = false;
+        } else {
+          FormValidator.clearError(labelField);
+        }
+      }
+
       const title = form.querySelector('#title');
       const focus = form.querySelector('#focusMinutes');
       const brk = form.querySelector('#breakMinutes');
@@ -45,8 +64,8 @@
 
       if (title) {
         const trimmedTitle = title.value.trim();
-        if (trimmedTitle.length > 60) {
-          FormValidator.showError(title, 'Title must be 60 characters or fewer');
+        if (trimmedTitle.length < 3 || trimmedTitle.length > 60) {
+          FormValidator.showError(title, 'Title must be between 3 and 60 characters');
           isValid = false;
         } else if (trimmedTitle.length > 0) {
           FormValidator.clearError(title);

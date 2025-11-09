@@ -1,48 +1,65 @@
-const crypto = require('crypto');
-
-const goals = [
-  {
-    id: crypto.randomUUID(),
-    title: 'Finish algorithms worksheet',
-    targetFocusMinutes: 120,
-    priority: 'High',
-    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1),
-    setReminder: true,
-    notes: 'Pair it with the Discrete Math recap session.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
-  },
-  {
-    id: crypto.randomUUID(),
-    title: 'Prep UX critique slides',
-    targetFocusMinutes: 90,
-    priority: 'Medium',
-    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
-    setReminder: false,
-    notes: 'Highlight the two competitive audits from Week 6.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
-  },
-];
-
-const MAX_GOALS = 15;
+const supabase = require('../lib/supabaseClient');
 
 const PRIORITY_LEVELS = ['High', 'Medium', 'Low'];
 
-function serialiseGoal(goal) {
+function mapRowToGoal(row) {
   return {
-    ...goal,
-    dueDate: goal.dueDate.toISOString(),
-    createdAt: goal.createdAt.toISOString(),
+    id: row.id,
+    title: row.title,
+    targetFocusMinutes: row.target_focus_minutes,
+    priority: row.priority,
+    dueDate: row.due_date,
+    setReminder: row.set_reminder,
+    notes: row.notes,
+    createdAt: row.created_at,
   };
 }
 
-function listGoals() {
-  return goals
+function calculateSnapshot(goals = []) {
+  if (goals.length === 0) {
+    return {
+      total: 0,
+      highPriority: 0,
+      nextDueLabel: 'No goals scheduled',
+    };
+  }
+
+  const sorted = goals
     .slice()
-    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
-    .map(serialiseGoal);
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+  const highPriority = goals.filter((goal) => goal.priority === 'High').length;
+  const nextGoal = sorted[0];
+  const dueDate = new Date(nextGoal.dueDate);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  return {
+    total: goals.length,
+    highPriority,
+    nextDueLabel: `${nextGoal.title} · due ${formatter.format(dueDate)}`,
+  };
 }
 
-function addGoal(input) {
+async function listGoals() {
+  const { data, error } = await supabase
+    .from('focus_goals')
+    .select(
+      'id, title, target_focus_minutes, priority, due_date, set_reminder, notes, created_at'
+    )
+    .order('due_date', { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to fetch focus goals: ${error.message}`);
+  }
+
+  return (data || []).map(mapRowToGoal);
+}
+
+async function addGoal(input) {
   const title = (input.title || '').trim();
   const targetFocusMinutes = Number.parseInt(input.targetFocusMinutes, 10);
   const dueDateInput = (input.dueDate || '').trim();
@@ -58,7 +75,11 @@ function addGoal(input) {
     errors.title = 'Goal title should be 80 characters or less.';
   }
 
-  if (Number.isNaN(targetFocusMinutes) || targetFocusMinutes < 30 || targetFocusMinutes > 600) {
+  if (
+    Number.isNaN(targetFocusMinutes) ||
+    targetFocusMinutes < 30 ||
+    targetFocusMinutes > 600
+  ) {
     errors.targetFocusMinutes = 'Pick between 30 and 600 minutes of focus time.';
   }
 
@@ -79,59 +100,40 @@ function addGoal(input) {
     return { ok: false, errors };
   }
 
-  const newGoal = {
-    id: crypto.randomUUID(),
+  const payload = {
     title,
-    targetFocusMinutes,
+    target_focus_minutes: targetFocusMinutes,
     priority,
-    dueDate,
-    setReminder,
-    notes,
-    createdAt: new Date(),
+    due_date: dueDateInput,
+    set_reminder: setReminder,
+    notes: notes || null,
   };
 
-  goals.push(newGoal);
+  const { data, error } = await supabase
+    .from('focus_goals')
+    .insert(payload)
+    .select()
+    .single();
 
-  if (goals.length > MAX_GOALS) {
-    goals.shift();
+  if (error) {
+    throw new Error(`Failed to save goal: ${error.message}`);
   }
 
   return {
     ok: true,
-    goal: serialiseGoal(newGoal),
+    goal: mapRowToGoal(data),
   };
 }
 
-function getSnapshot() {
-  const orderedGoals = listGoals();
-  if (orderedGoals.length === 0) {
-    return {
-      total: 0,
-      highPriority: 0,
-      nextDueLabel: 'No goals scheduled',
-    };
-  }
-
-  const highPriority = orderedGoals.filter((goal) => goal.priority === 'High').length;
-
-  const nextGoal = orderedGoals[0];
-  const dueDate = new Date(nextGoal.dueDate);
-  const dueFormatter = new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-
-  return {
-    total: orderedGoals.length,
-    highPriority,
-    nextDueLabel: `${nextGoal.title} · due ${dueFormatter.format(dueDate)}`,
-  };
+async function getSnapshot() {
+  const goals = await listGoals();
+  return calculateSnapshot(goals);
 }
 
 module.exports = {
   listGoals,
   addGoal,
   getSnapshot,
+  calculateSnapshot,
   PRIORITY_LEVELS,
 };

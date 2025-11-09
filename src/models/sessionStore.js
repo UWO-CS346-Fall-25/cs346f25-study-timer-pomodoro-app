@@ -1,48 +1,58 @@
-const crypto = require('crypto');
+const supabase = require('../lib/supabaseClient');
 
-const sessions = [
-  {
-    id: crypto.randomUUID(),
-    title: 'Algorithms Drill',
-    focusMinutes: 25,
-    breakMinutes: 5,
-    cycles: 4,
-    mood: 'Focused',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-  },
-  {
-    id: crypto.randomUUID(),
-    title: 'UX Research Review',
-    focusMinutes: 25,
-    breakMinutes: 5,
-    cycles: 3,
-    mood: 'Steady',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-  {
-    id: crypto.randomUUID(),
-    title: 'Capstone Planning',
-    focusMinutes: 50,
-    breakMinutes: 10,
-    cycles: 2,
-    mood: 'Energized',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
-  },
-];
-
-const MAX_SESSIONS = 20;
-
-function listSessions() {
-  return sessions
-    .slice()
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map((session) => ({
-      ...session,
-      createdAt: session.createdAt.toISOString(),
-    }));
+function mapRowToSession(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    focusMinutes: row.focus_minutes,
+    breakMinutes: row.break_minutes,
+    cycles: row.cycles,
+    mood: row.mood,
+    createdAt: row.created_at,
+  };
 }
 
-function addSession(input) {
+function calculateSummary(list = []) {
+  if (list.length === 0) {
+    return {
+      totalFocusMinutes: 0,
+      totalCycles: 0,
+      averageFocusBlock: 0,
+    };
+  }
+
+  const totals = list.reduce(
+    (acc, session) => {
+      acc.focusMinutes += session.focusMinutes * session.cycles;
+      acc.cycles += session.cycles;
+      return acc;
+    },
+    { focusMinutes: 0, cycles: 0 }
+  );
+
+  return {
+    totalFocusMinutes: totals.focusMinutes,
+    totalCycles: totals.cycles,
+    averageFocusBlock: Math.round(totals.focusMinutes / totals.cycles),
+  };
+}
+
+async function listSessions() {
+  const { data, error } = await supabase
+    .from('focus_sessions')
+    .select(
+      'id, title, focus_minutes, break_minutes, cycles, mood, created_at'
+    )
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch focus sessions: ${error.message}`);
+  }
+
+  return (data || []).map(mapRowToSession);
+}
+
+async function addSession(input) {
   const trimmedTitle = (input.title || '').trim();
   const focusMinutes = Number.parseInt(input.focusMinutes, 10);
   const breakMinutes = Number.parseInt(input.breakMinutes, 10);
@@ -73,54 +83,38 @@ function addSession(input) {
     return { ok: false, errors };
   }
 
-  const newSession = {
-    id: crypto.randomUUID(),
+  const payload = {
     title: trimmedTitle,
-    focusMinutes,
-    breakMinutes,
+    focus_minutes: focusMinutes,
+    break_minutes: breakMinutes,
     cycles,
     mood: mood.slice(0, 40),
-    createdAt: new Date(),
   };
 
-  sessions.push(newSession);
+  const { data, error } = await supabase
+    .from('focus_sessions')
+    .insert(payload)
+    .select()
+    .single();
 
-  if (sessions.length > MAX_SESSIONS) {
-    sessions.shift();
+  if (error) {
+    throw new Error(`Failed to save focus session: ${error.message}`);
   }
 
   return {
     ok: true,
-    session: { ...newSession, createdAt: newSession.createdAt.toISOString() },
+    session: mapRowToSession(data),
   };
 }
 
-function getSummary() {
-  const data = listSessions();
-  if (data.length === 0) {
-    return {
-      totalFocusMinutes: 0,
-      totalCycles: 0,
-      averageFocusBlock: 0,
-    };
-  }
-
-  const totalFocusMinutes = data.reduce(
-    (sum, session) => sum + session.focusMinutes * session.cycles,
-    0
-  );
-  const totalCycles = data.reduce((sum, session) => sum + session.cycles, 0);
-  const averageFocusBlock = Math.round(totalFocusMinutes / totalCycles);
-
-  return {
-    totalFocusMinutes,
-    totalCycles,
-    averageFocusBlock,
-  };
+async function getSummary() {
+  const sessions = await listSessions();
+  return calculateSummary(sessions);
 }
 
 module.exports = {
   listSessions,
   addSession,
   getSummary,
+  calculateSummary,
 };

@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   try {
-    initInteractiveElements(); 
+    initInteractiveElements();
   } catch (e) {
     console.error('initInteractiveElements failed:', e);
   }
@@ -129,8 +129,8 @@ const FormValidator = {
 
     if (title) {
       const trimmedTitle = title.value.trim();
-      if (trimmedTitle.length > 60) {
-        FormValidator.showError(title, 'Title must be 60 characters or fewer');
+      if (trimmedTitle.length < 3 || trimmedTitle.length > 60) {
+        FormValidator.showError(title, 'Title must be between 3 and 60 characters');
         isValid = false;
       } else if (trimmedTitle.length > 0) {
         FormValidator.clearError(title);
@@ -142,7 +142,10 @@ const FormValidator = {
     if (focus) {
       const n = asInt(focus);
       if (Number.isNaN(n) || n < 10 || n > 90) {
-        FormValidator.showError(focus, 'Focus minutes must be between 10 and 90');
+        FormValidator.showError(
+          focus,
+          'Focus minutes must be between 10 and 90'
+        );
         isValid = false;
       } else {
         FormValidator.clearError(focus);
@@ -552,7 +555,22 @@ function initInteractiveElements() {
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
       FormValidator.clearServerErrors(form);
-      if (!FormValidator.validate(form)) return;
+      if (!FormValidator.validate(form)) {
+        if (
+          window.NotificationCenter &&
+          typeof NotificationCenter.show === 'function'
+        ) {
+          NotificationCenter.show(
+            'Please fix the highlighted fields.',
+            'error'
+          );
+        }
+        const firstErr = form.querySelector('.error, .error-message');
+        if (firstErr && firstErr.scrollIntoView) {
+          firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
 
       const formData = new FormData(form);
       const csrfToken = formData.get('_csrf') || '';
@@ -583,7 +601,10 @@ function initInteractiveElements() {
             const el = form.querySelector(`[name="${field}"]`);
             if (el) FormValidator.showError(el, message, true);
           });
-          NotificationCenter.show('Please fix the highlighted fields.', 'error');
+          NotificationCenter.show(
+            'Please fix the highlighted fields.',
+            'error'
+          );
           return;
         }
 
@@ -638,7 +659,10 @@ function initInteractiveElements() {
         await refreshSessions();
       } catch (error) {
         console.error('Failed to save session', error);
-        NotificationCenter.show('Could not save session. Please try again.', 'error');
+        NotificationCenter.show(
+          'Could not save session. Please try again.',
+          'error'
+        );
       }
     });
   })();
@@ -679,7 +703,22 @@ function initInteractiveElements() {
       event.preventDefault();
       FormValidator.clearServerErrors(form);
 
-      if (!FormValidator.validate(form)) return;
+      if (!FormValidator.validate(form)) {
+        if (
+          window.NotificationCenter &&
+          typeof NotificationCenter.show === 'function'
+        ) {
+          NotificationCenter.show(
+            'Please fix the highlighted fields.',
+            'error'
+          );
+        }
+        const firstErr = form.querySelector('.error, .error-message');
+        if (firstErr && firstErr.scrollIntoView) {
+          firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
 
       const fd = new FormData(form);
       const csrf = fd.get('_csrf') || '';
@@ -707,7 +746,10 @@ function initInteractiveElements() {
             const el = form.querySelector(`[name="${name}"]`);
             if (el) FormValidator.showError(el, msg, true);
           });
-          NotificationCenter.show('Please fix the highlighted fields.', 'error');
+          NotificationCenter.show(
+            'Please fix the highlighted fields.',
+            'error'
+          );
           return;
         }
 
@@ -733,7 +775,10 @@ function initInteractiveElements() {
         NotificationCenter.show('Goal successfully added!', 'success');
       } catch (err) {
         console.error('Save goal failed', err);
-        NotificationCenter.show('Could not save goal. Please try again.', 'error');
+        NotificationCenter.show(
+          'Could not save goal. Please try again.',
+          'error'
+        );
       }
     });
   })();
