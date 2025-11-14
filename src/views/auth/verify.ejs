@@ -1,0 +1,61 @@
+<%- include('../partials/head', { title }) %>
+<body class="page-auth">
+  <%- include('../partials/header') %>
+
+  <main class="auth-container container">
+    <section class="auth-card verify-card">
+      <div class="verify-icon" aria-hidden="true">✉️</div>
+      <h1>Email verification</h1>
+      <p class="auth-subhead">
+        We’re confirming your FocusFlow account. This page will update automatically.
+      </p>
+
+      <div class="alert alert-info" data-verify-state>
+        <p>Hang tight while we process your link…</p>
+      </div>
+
+      <a href="/auth/login" class="button primary full-width" data-login-link>
+        Go to login
+      </a>
+    </section>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const stateBox = document.querySelector('[data-verify-state]');
+      const loginLink = document.querySelector('[data-login-link]');
+
+      if (!stateBox) return;
+
+      function show(type, message) {
+        stateBox.className = `alert alert-${type}`;
+        stateBox.innerHTML = `<p>${message}</p>`;
+      }
+
+      if (params.get('error_description')) {
+        const reason = params.get('error') === 'otp_expired' ? 'expired' : 'invalid';
+        show(
+          'error',
+          reason === 'expired'
+            ? 'That verification link has expired. Please request a new email from the login page.'
+            : params.get('error_description')
+        );
+      } else if (params.get('access_token')) {
+        show('success', 'Email verified! You can now log in to FocusFlow.');
+        if (loginLink) {
+          loginLink.focus();
+        }
+      } else {
+        show('info', 'This link looks incomplete. Try copying it again from the email.');
+      }
+
+      if (window.location.hash) {
+        history.replaceState(null, document.title, window.location.pathname);
+      }
+    })();
+  </script>
+</body>
+</html>

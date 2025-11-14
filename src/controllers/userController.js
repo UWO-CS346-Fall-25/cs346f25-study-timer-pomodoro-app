@@ -20,6 +20,87 @@ const DEFAULT_SESSION_MAX_AGE =
 const LONG_SESSION_MAX_AGE =
   Number.parseInt(process.env.SESSION_LONG_MAX_AGE, 10) || DEFAULT_SESSION_MAX_AGE * 30;
 
+function resolveAppBaseUrl(req) {
+  const envBase = (process.env.APP_BASE_URL || '').trim();
+  if (envBase) {
+    return envBase.replace(/\/+$/, '');
+  }
+  const host = req?.get?.('host') || req?.headers?.host;
+  let protocol = req?.protocol || 'http';
+  const forwardedProto = req?.headers?.['x-forwarded-proto'];
+  if (forwardedProto) {
+    protocol = forwardedProto.split(',')[0];
+  }
+  if (host) {
+    return `${protocol}://${host}`.replace(/\/+$/, '');
+  }
+  return 'http://localhost:3000';
+}
+
+function buildVerificationRedirectUrl(baseUrl) {
+  const normalizedBase = (baseUrl || '').trim().replace(/\/+$/, '') || 'http://localhost:3000';
+  return `${normalizedBase}/auth/verify`;
+}
+
+function isSupabaseDuplicateEmailError(error) {
+  const message = (error?.message || '').toLowerCase();
+  return (
+    message.includes('already registered') ||
+    message.includes('duplicate key value') ||
+    error?.status === 409 ||
+    error?.status === 422
+  );
+}
+
+async function findSupabaseUserByEmail(email) {
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  if (!normalizedEmail) return null;
+
+  let page = 1;
+  const perPage = 100;
+  while (page && page <= 50) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      console.warn('Failed to list Supabase users', error);
+      return null;
+    }
+    const users = data?.users || [];
+    const match = users.find(
+      (user) => (user.email || '').trim().toLowerCase() === normalizedEmail
+    );
+    if (match) {
+      return match;
+    }
+    if (!data?.nextPage || users.length < perPage) {
+      break;
+    }
+    page = data.nextPage;
+  }
+
+  return null;
+}
+
+async function sendVerificationInvite(email, redirectTo, metadata = {}) {
+  const invite = await supabase.auth.admin.inviteUserByEmail(email, {
+    redirectTo,
+    data: metadata,
+  });
+  if (invite.error) {
+    console.warn('Failed to send Supabase verification email', invite.error);
+  }
+}
+
+async function resendSignupVerification(email, redirectTo) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: redirectTo },
+  });
+  if (error) {
+    console.warn('Failed to resend Supabase verification email', error);
+  }
+}
+
 function buildRegisterErrors({ username, email, password, passwordConfirm }) {
   const errors = {};
   const trimmedUsername = (username || '').trim();
@@ -95,28 +176,42 @@ function authenticateSession(req, user) {
   };
 }
 
-async function createSupabaseAuthAccount({ email, password, username }) {
+async function createSupabaseAuthAccount({ email, password, username, verificationRedirect }) {
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const normalizedUsername = (username || '').trim();
+  const redirectTo = verificationRedirect || buildVerificationRedirectUrl();
+  if (!normalizedEmail) {
+    return { ok: false, error: new Error('Email is required for account creation.') };
+  }
+
   const { data, error } = await supabase.auth.admin.createUser({
-    email,
+    email: normalizedEmail,
     password,
     email_confirm: false,
-    user_metadata: { username },
+    user_metadata: { username: normalizedUsername },
   });
 
   if (error) {
+    if (isSupabaseDuplicateEmailError(error)) {
+      const existingUser = await findSupabaseUserByEmail(normalizedEmail);
+      if (existingUser) {
+        await resendSignupVerification(normalizedEmail, redirectTo);
+        return {
+          ok: true,
+          authUserId: existingUser.id,
+          reusedExisting: true,
+        };
+      }
+    }
     return { ok: false, error };
   }
 
-  const invite = await supabase.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.APP_BASE_URL || 'http://localhost:3000'}/auth/login`,
-  });
-  if (invite.error) {
-    console.warn('Failed to send Supabase verification email', invite.error);
-  }
+  await sendVerificationInvite(normalizedEmail, redirectTo, { username: normalizedUsername });
 
   return {
     ok: true,
     authUserId: data?.user?.id || null,
+    reusedExisting: false,
   };
 }
 
@@ -207,8 +302,14 @@ exports.postRegister = async (req, res, next) => {
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const verificationRedirect = buildVerificationRedirectUrl(resolveAppBaseUrl(req));
     let authUserId = null;
-    const supabaseAccount = await createSupabaseAuthAccount({ email, password, username });
+    const supabaseAccount = await createSupabaseAuthAccount({
+      email,
+      password,
+      username,
+      verificationRedirect,
+    });
     if (!supabaseAccount.ok) {
       errors.form =
         supabaseAccount.error?.message ||
@@ -249,13 +350,11 @@ exports.postRegister = async (req, res, next) => {
       });
     }
 
-    authenticateSession(req, result.user);
     req.session.flash = {
       type: 'success',
-      heading: 'Welcome to FocusFlow! Check your inbox to verify your email.',
+      heading: 'Account created! Check your inbox to verify your email, then log in.',
     };
-    const redirectTo = req.session.redirectTo || '/focus';
-    delete req.session.redirectTo;
+    const redirectTo = '/auth/login';
 
     if (wantsJson(req)) {
       return res.status(201).json({
@@ -265,7 +364,7 @@ exports.postRegister = async (req, res, next) => {
       });
     }
 
-    return res.redirect(redirectTo);
+    return res.redirect('/auth/login');
   } catch (error) {
     next(error);
   }
@@ -280,6 +379,13 @@ exports.getLogin = (req, res) => {
     title: 'Log In',
     errors: {},
     values: { email: '', rememberMe: false },
+    csrfToken: req.csrfToken(),
+  });
+};
+
+exports.getVerifyStatus = (req, res) => {
+  res.render('auth/verify', {
+    title: 'Check your email',
     csrfToken: req.csrfToken(),
   });
 };

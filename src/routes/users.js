@@ -31,6 +31,7 @@ router.get('/register', redirectIfAuthenticated, userController.getRegister);
 router.post('/register', redirectIfAuthenticated, userController.postRegister);
 router.get('/login', redirectIfAuthenticated, userController.getLogin);
 router.post('/login', redirectIfAuthenticated, userController.postLogin);
+router.get('/verify', userController.getVerifyStatus);
 router.post('/logout', requireAuth, userController.postLogout);
 
 module.exports = router;
