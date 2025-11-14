@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS public.focus_users (
   password_hash text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
   updated_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
-  last_login_at timestamptz
+  last_login_at timestamptz,
+  auth_user_id uuid UNIQUE,
+  email_verified_at timestamptz
 );
 
 CREATE INDEX IF NOT EXISTS idx_focus_users_email

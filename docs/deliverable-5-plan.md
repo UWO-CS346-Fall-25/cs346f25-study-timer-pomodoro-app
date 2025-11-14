@@ -12,6 +12,7 @@
 - Add registration route/controller that validates inputs, hashes passwords with bcrypt, stores the record, and returns structured success/error responses for the front end.
 - Build login route/controller that verifies credentials, make the session via `express-session`, and redirects/returns dashboard loads.
 - Implement session middleware (`requireAuth`, `attachUser`) and logout handler that destroys sessions, clears cookies, and prevents protected route access for anonymous users.
+- Tackle at least one optional enhancement (Supabase email verification + “Remember Me” cookie toggle) so the backend fully supports the Week 11 goals.
 - Update README/setup docs with `.env` auth keys, Supabase migration notes, and developer verification steps; add in-line comments only where logic is non-obvious.
 
 **Dasha Coates (frontend/auth UX)**

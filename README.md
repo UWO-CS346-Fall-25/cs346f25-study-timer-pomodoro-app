@@ -43,6 +43,8 @@ FocusFlow is our CS346 semester project for building a study timer web applicati
      to create the `focus_users` table that stores hashed credentials.
    - Run [`db/migrations/004_add_user_id_to_focus_tables.sql`](db/migrations/004_add_user_id_to_focus_tables.sql)
      to attach sessions/goals to a specific `focus_users.id`.
+   - Run [`db/migrations/005_add_auth_columns_to_focus_users.sql`](db/migrations/005_add_auth_columns_to_focus_users.sql)
+     to add Supabase Auth metadata (`auth_user_id`, `email_verified_at`) to `focus_users`.
    - (Optional) keep `db/migrations/001`/`seed.js` for local Postgres development.
 
 5. **Start the application**
@@ -131,13 +133,16 @@ Week 11 brings full authentication and session workflows.
 - **Session middleware** – [`src/middleware/auth.js`](src/middleware/auth.js) guards protected routes, remembers the intended destination for redirects, and emits JSON errors for API requests. Express-session now uses a named cookie plus SameSite/secure defaults.
 - **Protected experience** – `/focus`, `/insights`, and related APIs are locked behind authentication. Header UI reflects login status with a friendly greeting + logout form, while `/auth/register` and `/auth/login` provide starter EJS views that Dasha can enhance.
 - **Per-user data** – [`db/migrations/004_add_user_id_to_focus_tables.sql`](db/migrations/004_add_user_id_to_focus_tables.sql) adds `user_id` foreign keys to `focus_sessions` and `focus_goals`. The repositories and controllers now filter reads/inserts by the logged-in user, so each dashboard only shows the owner’s sessions/goals.
+- **Optional enhancements** – Login supports a “Remember Me” cookie toggle (configurable via `SESSION_LONG_MAX_AGE`), and Supabase Auth sends verification emails during registration. Users must confirm via email before logging in, satisfying two of the Deliverable 5 enhancement options.
 
 ## Authentication Verification Checklist
 
 1. Start the dev server (`npm run dev`) and navigate to `/focus` while logged out. You should be redirected to `/auth/login` with a flash prompt.
 2. Visit `/auth/register`, submit missing/invalid fields, and observe inline error messaging. Complete the form to create a Supabase user and get redirected back to `/focus`.
-3. Log out via the header button. The session cookie (`focusflow.sid` by default) is cleared and protected routes again redirect to `/auth/login`.
-4. Log in with the new account; invalid credentials should keep you on the login page with an error. Successful login updates the greeting in the header and unlocks `/insights` plus the `/api/*` endpoints.
+3. Check your inbox for the Supabase confirmation email. Attempting to log in before verifying should keep you on `/auth/login` with an error explaining that verification is required.
+4. After confirming, log out via the header button. The session cookie (`focusflow.sid` by default) is cleared and protected routes again redirect to `/auth/login`.
+5. Log in again with and without “Remember Me” checked; the cookie max-age should be 24 hours vs. ~30 days, and `/insights` + `/api/*` should show only your own data.
+6. (Optional) Hit `/api/sessions` with `fetch` while logged out to confirm it returns a `401 AUTH_REQUIRED` JSON payload from the middleware.
 
 ## Project Structure
 

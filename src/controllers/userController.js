@@ -11,9 +11,14 @@
 const bcrypt = require('bcrypt');
 const userStore = require('../models/userStore');
 const { wantsJson } = require('../utils/requestFormat');
+const supabase = require('../lib/supabaseClient');
 
 const BCRYPT_ROUNDS = Number.parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 12;
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'focusflow.sid';
+const DEFAULT_SESSION_MAX_AGE =
+  Number.parseInt(process.env.SESSION_MAX_AGE, 10) || 1000 * 60 * 60 * 24;
+const LONG_SESSION_MAX_AGE =
+  Number.parseInt(process.env.SESSION_LONG_MAX_AGE, 10) || DEFAULT_SESSION_MAX_AGE * 30;
 
 function buildRegisterErrors({ username, email, password, passwordConfirm }) {
   const errors = {};
@@ -90,6 +95,61 @@ function authenticateSession(req, user) {
   };
 }
 
+async function createSupabaseAuthAccount({ email, password, username }) {
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: false,
+    user_metadata: { username },
+  });
+
+  if (error) {
+    return { ok: false, error };
+  }
+
+  const invite = await supabase.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${process.env.APP_BASE_URL || 'http://localhost:3000'}/auth/login`,
+  });
+  if (invite.error) {
+    console.warn('Failed to send Supabase verification email', invite.error);
+  }
+
+  return {
+    ok: true,
+    authUserId: data?.user?.id || null,
+  };
+}
+
+async function fetchSupabaseAuthUser(user) {
+  if (!user?.authUserId) return null;
+  const { data, error } = await supabase.auth.admin.getUserById(user.authUserId);
+  if (!error && data?.user) {
+    return data.user;
+  }
+  return null;
+}
+
+async function ensureEmailVerified(user) {
+  if (!user) return true;
+  if (user.emailVerifiedAt) {
+    return true;
+  }
+
+  const authUser = await fetchSupabaseAuthUser(user);
+  if (!authUser) {
+    // If we cannot fetch the auth user, allow login to proceed.
+    return true;
+  }
+  const confirmedAt = authUser.email_confirmed_at || authUser.confirmed_at || null;
+
+  if (!confirmedAt) {
+    return false;
+  }
+
+  await userStore.markEmailVerified(user.id, confirmedAt);
+  return true;
+}
+
 /**
  * GET /users/register
  * Display registration form
@@ -147,10 +207,31 @@ exports.postRegister = async (req, res, next) => {
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    let authUserId = null;
+    const supabaseAccount = await createSupabaseAuthAccount({ email, password, username });
+    if (!supabaseAccount.ok) {
+      errors.form =
+        supabaseAccount.error?.message ||
+        'We could not trigger the verification email. Try again in a moment.';
+      if (
+        supabaseAccount.error?.message?.toLowerCase().includes('already registered') ||
+        supabaseAccount.error?.status === 422
+      ) {
+        errors.email = 'That email is already registered.';
+      }
+      return handleErrorResponse(req, res, 'auth/register', 422, {
+        title: 'Create Account',
+        errors,
+        values,
+      });
+    }
+    authUserId = supabaseAccount.authUserId;
+
     const result = await userStore.createUser({
       username,
       email,
       passwordHash,
+      authUserId,
     });
 
     if (!result.ok) {
@@ -171,7 +252,7 @@ exports.postRegister = async (req, res, next) => {
     authenticateSession(req, result.user);
     req.session.flash = {
       type: 'success',
-      heading: 'Welcome to FocusFlow!',
+      heading: 'Welcome to FocusFlow! Check your inbox to verify your email.',
     };
     const redirectTo = req.session.redirectTo || '/focus';
     delete req.session.redirectTo;
@@ -198,7 +279,7 @@ exports.getLogin = (req, res) => {
   res.render('auth/login', {
     title: 'Log In',
     errors: {},
-    values: {},
+    values: { email: '', rememberMe: false },
     csrfToken: req.csrfToken(),
   });
 };
@@ -209,8 +290,9 @@ exports.getLogin = (req, res) => {
  */
 exports.postLogin = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    const values = { email };
+    const { email, password, rememberMe } = req.body;
+    const rememberMeChecked = rememberMe === 'on' || rememberMe === true || rememberMe === 'true';
+    const values = { email, rememberMe: rememberMeChecked };
     const errors = buildLoginErrors({ email, password });
 
     if (Object.keys(errors).length > 0) {
@@ -241,8 +323,20 @@ exports.postLogin = async (req, res, next) => {
       });
     }
 
+    const verified = await ensureEmailVerified(user);
+    if (!verified) {
+      errors.form = 'Please verify your email before logging in. Check your inbox for the link.';
+      return handleErrorResponse(req, res, 'auth/login', 401, {
+        title: 'Log In',
+        errors,
+        values,
+      });
+    }
+
     authenticateSession(req, user);
     await userStore.updateLastLogin(user.id);
+    req.session.rememberMe = rememberMeChecked;
+    req.session.cookie.maxAge = rememberMeChecked ? LONG_SESSION_MAX_AGE : DEFAULT_SESSION_MAX_AGE;
 
     req.session.flash = {
       type: 'success',

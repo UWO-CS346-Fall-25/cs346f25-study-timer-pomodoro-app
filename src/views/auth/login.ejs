@@ -44,6 +44,16 @@
         </label>
 
         <button type="submit" class="button primary full-width">Sign in</button>
+
+        <label class="remember-me">
+          <input
+            type="checkbox"
+            name="rememberMe"
+            value="on"
+            <%= values.rememberMe ? 'checked' : '' %>
+          />
+          Remember me on this device
+        </label>
       </form>
 
       <p class="alt-link">

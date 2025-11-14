@@ -49,7 +49,8 @@ This is a teaching template for building web applications with:
 │   ├── migrations/         # Database migrations
 │   │   ├── 002_create_focus_tables.sql
 │   │   ├── 003_create_focus_users_table.sql
-│   │   └── 004_add_user_id_to_focus_tables.sql
+│   │   ├── 004_add_user_id_to_focus_tables.sql
+│   │   └── 005_add_auth_columns_to_focus_users.sql
 │   └── seeds/              # Database seeds
 │       └── 001_seed_users.sql
 ├── docs/                   # Documentation

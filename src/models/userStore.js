@@ -10,6 +10,8 @@ function mapRow(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastLoginAt: row.last_login_at,
+    authUserId: row.auth_user_id,
+    emailVerifiedAt: row.email_verified_at,
   };
 }
 
@@ -64,7 +66,7 @@ async function findById(id) {
   return mapRow(data);
 }
 
-async function createUser({ username, email, passwordHash }) {
+async function createUser({ username, email, passwordHash, authUserId = null }) {
   const trimmedUsername = (username || '').trim();
   const trimmedEmail = (email || '').trim();
 
@@ -72,6 +74,7 @@ async function createUser({ username, email, passwordHash }) {
     username: trimmedUsername,
     email: trimmedEmail,
     password_hash: passwordHash,
+    auth_user_id: authUserId,
   };
 
   const { data, error } = await supabase
@@ -115,10 +118,26 @@ async function updateLastLogin(id) {
   return mapRow(data);
 }
 
+async function markEmailVerified(id, timestamp) {
+  const { data, error } = await supabase
+    .from('focus_users')
+    .update({ email_verified_at: timestamp })
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to mark email verified: ${error.message}`);
+  }
+
+  return mapRow(data);
+}
+
 module.exports = {
   createUser,
   findByEmail,
   findByUsername,
   findById,
   updateLastLogin,
+  markEmailVerified,
 };
