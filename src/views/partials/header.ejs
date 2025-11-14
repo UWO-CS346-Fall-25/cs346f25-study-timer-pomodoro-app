@@ -22,8 +22,18 @@
           <button type="submit" class="button ghost small">Logout</button>
         </form>
       <% } else { %>
-        <a href="/auth/login" class="button ghost small">Log in</a>
-        <a href="/auth/register" class="button primary small">Sign up</a>
+        <a
+          href="/auth/login"
+          class="button small <%= currentPath === '/auth/login' ? 'primary' : 'ghost' %>"
+        >
+          Log in
+        </a>
+        <a
+          href="/auth/register"
+          class="button small <%= currentPath === '/auth/register' ? 'primary' : 'ghost' %>"
+        >
+          Sign up
+        </a>
       <% } %>
     </div>
   </nav>
