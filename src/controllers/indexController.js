@@ -123,7 +123,8 @@ exports.getAbout = async (req, res, next) => {
 
 exports.getFocus = async (req, res, next) => {
   try {
-    const sessions = await sessionStore.listSessions();
+    const userId = req.session.user?.id;
+    const sessions = await sessionStore.listSessions(userId);
     const summary = sessionStore.calculateSummary(sessions);
     const values = res.locals.formValues || {
       title: '',
@@ -140,7 +141,7 @@ exports.getFocus = async (req, res, next) => {
       notes: '',
       setReminder: false,
     };
-    const goals = await goalStore.listGoals();
+    const goals = await goalStore.listGoals(userId);
     const goalSnapshot = goalStore.calculateSnapshot(goals);
 
     res.render('focus', {
@@ -166,7 +167,8 @@ exports.getFocus = async (req, res, next) => {
 
 exports.getInsights = async (req, res, next) => {
   try {
-    const sessions = await sessionStore.listSessions();
+    const userId = req.session.user?.id;
+    const sessions = await sessionStore.listSessions(userId);
     const summary = sessionStore.calculateSummary(sessions);
     const recentSessions = sessions.slice(0, 5).map((session) => ({
       id: session.id,
@@ -189,7 +191,7 @@ exports.getInsights = async (req, res, next) => {
       totalFocusLabel,
       latestMood: recentSessions.length > 0 ? recentSessions[0].mood : 'Getting started',
     };
-    const goals = await goalStore.listGoals();
+    const goals = await goalStore.listGoals(userId);
     const goalSnapshot = goalStore.calculateSnapshot(goals);
 
     res.render('insights', {
@@ -211,10 +213,11 @@ exports.getInsights = async (req, res, next) => {
 
 exports.createSession = async (req, res, next) => {
   try {
+  const userId = req.session.user?.id;
   const wantsJson =
     req.get('x-requested-with') === 'fetch' ||
     req.headers.accept?.includes('application/json');
-    const result = await sessionStore.addSession(req.body);
+    const result = await sessionStore.addSession(userId, req.body);
 
     if (!result.ok) {
       if (wantsJson) {
@@ -246,7 +249,7 @@ exports.createSession = async (req, res, next) => {
       return res.status(201).json({
         ok: true,
         session: result.session,
-        summary: await sessionStore.getSummary(),
+        summary: await sessionStore.getSummaryForUser(userId),
       });
     }
 
@@ -258,7 +261,8 @@ exports.createSession = async (req, res, next) => {
 
 exports.getSessionsJson = async (req, res, next) => {
   try {
-    const sessions = await sessionStore.listSessions();
+    const userId = req.session.user?.id;
+    const sessions = await sessionStore.listSessions(userId);
     const summary = sessionStore.calculateSummary(sessions);
     res.json({
       sessions,
@@ -271,10 +275,11 @@ exports.getSessionsJson = async (req, res, next) => {
 
 exports.createGoal = async (req, res, next) => {
   try {
+    const userId = req.session.user?.id;
     const wantsJson =
       req.get('x-requested-with') === 'fetch' ||
       req.headers.accept?.includes('application/json');
-    const result = await goalStore.addGoal(req.body);
+    const result = await goalStore.addGoal(userId, req.body);
 
     if (!result.ok) {
       if (wantsJson) {
@@ -307,8 +312,8 @@ exports.createGoal = async (req, res, next) => {
       return res.status(201).json({
         ok: true,
         goal: result.goal,
-        goals: await goalStore.listGoals(),
-        snapshot: await goalStore.getSnapshot(),
+        goals: await goalStore.listGoals(userId),
+        snapshot: await goalStore.getSnapshot(userId),
       });
     }
 
@@ -320,7 +325,8 @@ exports.createGoal = async (req, res, next) => {
 
 exports.getGoalsJson = async (req, res, next) => {
   try {
-    const goals = await goalStore.listGoals();
+    const userId = req.session.user?.id;
+    const goals = await goalStore.listGoals(userId);
     const snapshot = goalStore.calculateSnapshot(goals);
     res.json({
       goals,

@@ -11,5 +11,20 @@
         </li>
       <% }); %>
     </ul>
+    <div class="account-actions">
+      <% if (user) { %>
+        <span class="user-pill">
+          <i class="icon" data-lucide="user"></i>
+          <span>Hi, <%= user.username %></span>
+        </span>
+        <form action="/auth/logout" method="POST">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+          <button type="submit" class="button ghost small">Logout</button>
+        </form>
+      <% } else { %>
+        <a href="/auth/login" class="button ghost small">Log in</a>
+        <a href="/auth/register" class="button primary small">Sign up</a>
+      <% } %>
+    </div>
   </nav>
 </header>

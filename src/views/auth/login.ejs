@@ -1,0 +1,58 @@
+<%- include('../partials/head', { title }) %>
+<body class="page-auth">
+  <%- include('../partials/header') %>
+
+  <main class="auth-container container">
+    <section class="auth-card">
+      <h1>Log in to FocusFlow</h1>
+      <p class="auth-subhead">Pick up where you left off with your saved sessions and insights.</p>
+
+      <% if (errors && errors.form) { %>
+        <div class="alert alert-error">
+          <p><%= errors.form %></p>
+        </div>
+      <% } %>
+
+      <form action="/auth/login" method="POST" class="auth-form" novalidate>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+        <label>
+          Email address
+          <input
+            type="email"
+            name="email"
+            value="<%= values.email || '' %>"
+            autocomplete="email"
+            required
+          />
+          <% if (errors && errors.email) { %>
+            <span class="field-error"><%= errors.email %></span>
+          <% } %>
+        </label>
+
+        <label>
+          Password
+          <input
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            required
+          />
+          <% if (errors && errors.password) { %>
+            <span class="field-error"><%= errors.password %></span>
+          <% } %>
+        </label>
+
+        <button type="submit" class="button primary full-width">Sign in</button>
+      </form>
+
+      <p class="alt-link">
+        Need an account?
+        <a href="/auth/register">Create one now.</a>
+      </p>
+    </section>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

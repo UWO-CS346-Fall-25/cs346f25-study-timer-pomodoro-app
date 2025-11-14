@@ -47,7 +47,9 @@ This is a teaching template for building web applications with:
 │   ├── seed.js             # Seed runner
 │   ├── reset.js            # Database reset script
 │   ├── migrations/         # Database migrations
-│   │   └── 001_create_users_table.sql
+│   │   ├── 002_create_focus_tables.sql
+│   │   ├── 003_create_focus_users_table.sql
+│   │   └── 004_add_user_id_to_focus_tables.sql
 │   └── seeds/              # Database seeds
 │       └── 001_seed_users.sql
 ├── docs/                   # Documentation
