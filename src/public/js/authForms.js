@@ -52,7 +52,9 @@
             errors.form ||
             'Please fix the highlighted fields and try submitting again.';
           setFormError(form, formMessage);
-          NotificationCenter?.show(formMessage, 'error');
+          // Prefer inline guidance over duplicate toasts when the user still needs
+          // to complete required fields.
+          return;
         } else {
           const fallbackMsg = 'We could not reach the server. Please try again.';
           setFormError(form, fallbackMsg);
