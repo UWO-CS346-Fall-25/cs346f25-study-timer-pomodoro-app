@@ -29,7 +29,10 @@
           position: 'right',
           stopOnFocus: true,
           close: true,
-          className: `ff-toast ff-toast--${type}`,
+          className:
+            message.trim() === 'Welcome back!'
+              ? 'ff-toast ff-toast--welcome'
+              : `ff-toast ff-toast--${type}`,
           style: {
             background:
               type === 'success'

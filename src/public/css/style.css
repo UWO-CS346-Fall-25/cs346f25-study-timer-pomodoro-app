@@ -263,6 +263,10 @@ main.container,
   color: var(--navy-900);
   border-color: transparent;
 }
+#logOut {
+  background: red;
+  color: white;
+}
 
 /* --------------------------------------------- */
 /* Home: Hero, Features, Workflow                */
@@ -1115,6 +1119,10 @@ body.theme-lightning .site-footer,
     transform: scaleX(0);
     opacity: 0.5;
   }
+}
+
+.ff-toast--welcome {
+  background: linear-gradient(90deg, #0fb5c8, #34d5db) !important;
 }
 
 /* --------------------------------------------- */

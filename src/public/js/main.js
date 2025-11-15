@@ -24,6 +24,23 @@ function isPage(id) {
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Application initialized');
   try {
+    const errBox = document.querySelector('.alert.alert-error');
+    if (errBox && window.NotificationCenter) {
+      const msg = errBox.innerText.trim();
+      if (msg) NotificationCenter.show(msg, 'error');
+    }
+
+    const flashEl = document.querySelector('[data-flash]');
+    if (flashEl && window.NotificationCenter) {
+      const type = flashEl.dataset.flashType || 'info';
+      const msg = flashEl.textContent.trim();
+      if (msg) NotificationCenter.show(msg, type);
+    }
+  } catch (e) {
+    console.error('Toastify universal handler failed:', e);
+  }
+
+  try {
     FormValidator.init();
   } catch (e) {
     console.error('initFormValidation failed:', e);
@@ -130,7 +147,10 @@ const FormValidator = {
     if (title) {
       const trimmedTitle = title.value.trim();
       if (trimmedTitle.length < 3 || trimmedTitle.length > 60) {
-        FormValidator.showError(title, 'Title must be between 3 and 60 characters');
+        FormValidator.showError(
+          title,
+          'Title must be between 3 and 60 characters'
+        );
         isValid = false;
       } else if (trimmedTitle.length > 0) {
         FormValidator.clearError(title);
@@ -170,6 +190,10 @@ const FormValidator = {
       } else {
         FormValidator.clearError(cycles);
       }
+    }
+
+    if (!isValid && window.NotificationCenter) {
+      NotificationCenter.show('Please check the highlighted fields.', 'error');
     }
 
     return isValid;

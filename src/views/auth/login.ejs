@@ -8,12 +8,12 @@
       <p class="auth-subhead">Pick up where you left off with your saved sessions and insights.</p>
 
       <% if (errors && errors.form) { %>
-        <div class="alert alert-error">
+        <div class="alert alert-error" >
           <p><%= errors.form %></p>
         </div>
       <% } %>
 
-      <form action="/auth/login" method="POST" class="auth-form" novalidate>
+      <form action="/auth/login" method="POST" class="auth-form" novalidate data-validate>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
         <label>
