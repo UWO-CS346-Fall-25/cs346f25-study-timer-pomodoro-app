@@ -947,6 +947,26 @@ body.theme-lightning .site-footer,
   opacity: 0.8;
 }
 
+#password-strength {
+  height: 6px;
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+#password-strength .bar {
+  height: 100%;
+  width: 0%;
+  transition: width 0.25s ease;
+}
+
+#password-strength-text {
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
 .remember-me {
   display: flex;
   align-items: center;

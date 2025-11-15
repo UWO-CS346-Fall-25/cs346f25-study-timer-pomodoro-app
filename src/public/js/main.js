@@ -20,6 +20,18 @@ function isPage(id) {
   return document.body.classList.contains('page-' + id);
 }
 
+function evaluatePasswordStrength(password) {
+  let score = 0;
+
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  return score;
+}
+
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Application initialized');
@@ -118,6 +130,39 @@ const FormValidator = {
           event.preventDefault();
         }
       });
+
+      const pwdInput = form.querySelector('input[data-strength]');
+      const bar = form.querySelector('#password-strength .bar');
+      const text = form.querySelector('#password-strength-text');
+
+      if (pwdInput && bar && text) {
+        pwdInput.addEventListener('input', function () {
+          const value = pwdInput.value.trim();
+          const score = evaluatePasswordStrength(value);
+
+          const widths = ['0%', '20%', '40%', '60%', '80%', '100%'];
+          const colors = [
+            'transparent',
+            '#ef4444',
+            '#f97316',
+            '#facc15',
+            '#4ade80',
+            '#22c55e',
+          ];
+          const labels = [
+            'Too short',
+            'Very weak',
+            'Weak',
+            'Medium',
+            'Strong',
+            'Very strong',
+          ];
+
+          bar.style.width = widths[score];
+          bar.style.background = colors[score];
+          text.textContent = labels[score];
+        });
+      }
     });
   },
 

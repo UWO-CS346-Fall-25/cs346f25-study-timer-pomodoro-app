@@ -50,11 +50,18 @@
           Password
           <input
             type="password"
+            id="password"
             name="password"
             autocomplete="new-password"
             minlength="8"
             required
+            data-strength
           />
+          <div id="password-strength">
+            <div class="bar"></div>
+          </div>
+          <p id="password-strength-text"></p>
+
           <% if (errors && errors.password) { %>
             <span class="field-error"><%= errors.password %></span>
           <% } %>
