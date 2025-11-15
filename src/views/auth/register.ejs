@@ -13,8 +13,18 @@
         </div>
       <% } %>
 
-      <form action="/auth/register" method="POST" class="auth-form" novalidate data-validate>
+      <form
+        action="/auth/register"
+        method="POST"
+        class="auth-form"
+        novalidate
+        data-validate
+        data-auth-form="register"
+        data-success-message="Account created! Check your inbox to verify your email."
+        data-success-redirect="/auth/login"
+      >
         <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <div class="auth-inline-message is-error" data-form-error hidden role="alert"></div>
 
         <label>
           Username

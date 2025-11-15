@@ -13,8 +13,18 @@
         </div>
       <% } %>
 
-      <form action="/auth/login" method="POST" class="auth-form" novalidate data-validate>
+      <form
+        action="/auth/login"
+        method="POST"
+        class="auth-form"
+        novalidate
+        data-validate
+        data-auth-form="login"
+        data-success-message="Welcome back! Redirecting you now."
+        data-success-redirect="/focus"
+      >
         <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <div class="auth-inline-message is-error" data-form-error hidden role="alert"></div>
 
         <label>
           Email address
