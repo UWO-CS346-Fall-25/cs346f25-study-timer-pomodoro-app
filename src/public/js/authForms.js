@@ -1,11 +1,12 @@
 /* eslint-env browser */
-/* global NotificationCenter */
+/* global NotificationCenter, FormData */
 
 (function () {
   const cssEscape =
-    (window.CSS && typeof window.CSS.escape === 'function'
+    window.CSS && typeof window.CSS.escape === 'function'
       ? window.CSS.escape.bind(window.CSS)
-      : (value) => value.replace(/([ #;?%&,.+*~\':"!^$[\]()=>|/@])/g, '\\$1'));
+      : (value = '') =>
+          String(value).replace(/([ !"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, '\\$1');
 
   function initAuthForms() {
     const forms = document.querySelectorAll('.auth-form[data-auth-form]');
