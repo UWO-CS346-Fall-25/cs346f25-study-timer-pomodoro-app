@@ -19,7 +19,10 @@
         </button>
         <form action="/auth/logout" method="POST">
           <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
-          <button type="submit" class="button ghost small" id="logOut">Logout</button>
+          <button type="submit" class="button ghost small with-icon" id="logOut">
+            <i data-lucide="log-out"></i>
+            Logout
+          </button>
         </form>
       <% } else { %>
         <a
