@@ -37,12 +37,17 @@ function calculateSummary(list = []) {
   };
 }
 
-async function listSessions() {
+async function listSessions(userId) {
+  if (!userId) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('focus_sessions')
     .select(
-      'id, title, focus_minutes, break_minutes, cycles, mood, created_at'
+      'id, title, focus_minutes, break_minutes, cycles, mood, created_at, user_id'
     )
+    .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -52,7 +57,10 @@ async function listSessions() {
   return (data || []).map(mapRowToSession);
 }
 
-async function addSession(input) {
+async function addSession(userId, input) {
+  if (!userId) {
+    throw new Error('User ID is required to create a session.');
+  }
   const trimmedTitle = (input.title || '').trim();
   const focusMinutes = Number.parseInt(input.focusMinutes, 10);
   const breakMinutes = Number.parseInt(input.breakMinutes, 10);
@@ -89,6 +97,7 @@ async function addSession(input) {
     break_minutes: breakMinutes,
     cycles,
     mood: mood.slice(0, 40),
+    user_id: userId,
   };
 
   const { data, error } = await supabase
@@ -107,14 +116,14 @@ async function addSession(input) {
   };
 }
 
-async function getSummary() {
-  const sessions = await listSessions();
+async function getSummaryForUser(userId) {
+  const sessions = await listSessions(userId);
   return calculateSummary(sessions);
 }
 
 module.exports = {
   listSessions,
   addSession,
-  getSummary,
+  getSummaryForUser,
   calculateSummary,
 };

@@ -19,14 +19,15 @@ const express = require('express');
 
 const router = express.Router();
 const indexController = require('../controllers/indexController');
+const { requireAuth } = require('../middleware/auth');
 
 router.get('/', indexController.getHome);
-router.get('/focus', indexController.getFocus);
-router.get('/insights', indexController.getInsights);
+router.get('/focus', requireAuth, indexController.getFocus);
+router.get('/insights', requireAuth, indexController.getInsights);
 router.get('/about', indexController.getAbout);
-router.post('/focus/sessions', indexController.createSession);
-router.post('/focus/goals', indexController.createGoal);
-router.get('/api/sessions', indexController.getSessionsJson);
-router.get('/api/goals', indexController.getGoalsJson);
+router.post('/focus/sessions', requireAuth, indexController.createSession);
+router.post('/focus/goals', requireAuth, indexController.createGoal);
+router.get('/api/sessions', requireAuth, indexController.getSessionsJson);
+router.get('/api/goals', requireAuth, indexController.getGoalsJson);
 
 module.exports = router;

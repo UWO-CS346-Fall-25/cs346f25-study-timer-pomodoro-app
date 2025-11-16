@@ -17,6 +17,9 @@ const csrf = require('csurf');
 
 // Initialize Express app
 const app = express();
+const sessionCookieName = process.env.SESSION_COOKIE_NAME || 'focusflow.sid';
+const sessionMaxAge =
+  Number.parseInt(process.env.SESSION_MAX_AGE, 10) || 1000 * 60 * 60 * 24;
 
 // Security middleware - Helmet
 app.use(
@@ -47,13 +50,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Session configuration
 app.use(
   session({
+    name: sessionCookieName,
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      sameSite: 'lax',
+      maxAge: sessionMaxAge,
     },
   })
 );
@@ -92,6 +97,8 @@ app.use((req, res, next) => {
 // const indexRouter = require('./routes/index');
 // app.use('/', indexRouter);
 const indexRouter = require('./routes/index');
+const authRouter = require('./routes/users');
+app.use('/auth', csrfProtection, authRouter);
 app.use('/', csrfProtection, indexRouter);
 
 // 404 handler

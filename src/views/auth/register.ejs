@@ -1,0 +1,105 @@
+<%- include('../partials/head', { title }) %>
+<body class="page-auth">
+  <%- include('../partials/header') %>
+
+  <main class="auth-container container">
+    <section class="auth-card">
+      <h1>Create your FocusFlow profile</h1>
+      <p class="auth-subhead">Save your Pomodoro sessions and track your study streaks.</p>
+
+      <% if (errors && errors.form) { %>
+        <div class="alert alert-error">
+          <p><%= errors.form %></p>
+        </div>
+      <% } %>
+
+      <form
+        action="/auth/register"
+        method="POST"
+        class="auth-form"
+        novalidate
+        data-validate
+        data-auth-form="register"
+        data-success-message="Account created! Check your inbox to verify your email."
+        data-success-redirect="/auth/login"
+      >
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <div class="auth-inline-message is-error" data-form-error hidden role="alert"></div>
+
+        <label>
+          Username
+          <input
+            type="text"
+            name="username"
+            value="<%= values.username || '' %>"
+            autocomplete="username"
+            minlength="3"
+            maxlength="30"
+            required
+          />
+          <% if (errors && errors.username) { %>
+            <span class="field-error"><%= errors.username %></span>
+          <% } %>
+        </label>
+
+        <label>
+          Email address
+          <input
+            type="email"
+            name="email"
+            value="<%= values.email || '' %>"
+            autocomplete="email"
+            required
+          />
+          <% if (errors && errors.email) { %>
+            <span class="field-error"><%= errors.email %></span>
+          <% } %>
+        </label>
+
+        <label>
+          Password
+          <input
+            type="password"
+            id="password"
+            name="password"
+            autocomplete="new-password"
+            minlength="8"
+            required
+            data-strength
+          />
+          <div id="password-strength">
+            <div class="bar"></div>
+          </div>
+          <p id="password-strength-text"></p>
+
+          <% if (errors && errors.password) { %>
+            <span class="field-error"><%= errors.password %></span>
+          <% } %>
+        </label>
+
+        <label>
+          Confirm password
+          <input
+            type="password"
+            name="passwordConfirm"
+            autocomplete="new-password"
+            minlength="8"
+          />
+          <% if (errors && errors.passwordConfirm) { %>
+            <span class="field-error"><%= errors.passwordConfirm %></span>
+          <% } %>
+        </label>
+
+        <button type="submit" class="button primary full-width">Create account</button>
+      </form>
+
+      <p class="alt-link">
+        Already have an account?
+        <a href="/auth/login">Sign in.</a>
+      </p>
+    </section>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

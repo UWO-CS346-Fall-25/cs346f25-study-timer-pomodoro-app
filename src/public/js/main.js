@@ -20,9 +20,38 @@ function isPage(id) {
   return document.body.classList.contains('page-' + id);
 }
 
+function evaluatePasswordStrength(password) {
+  let score = 0;
+
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  return score;
+}
+
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Application initialized');
+  try {
+    const errBox = document.querySelector('.alert.alert-error');
+    if (errBox && window.NotificationCenter) {
+      const msg = errBox.innerText.trim();
+      if (msg) NotificationCenter.show(msg, 'error');
+    }
+
+    const flashEl = document.querySelector('[data-flash]');
+    if (flashEl && window.NotificationCenter) {
+      const type = flashEl.dataset.flashType || 'info';
+      const msg = flashEl.textContent.trim();
+      if (msg) NotificationCenter.show(msg, type);
+    }
+  } catch (e) {
+    console.error('Toastify universal handler failed:', e);
+  }
+
   try {
     FormValidator.init();
   } catch (e) {
@@ -101,6 +130,39 @@ const FormValidator = {
           event.preventDefault();
         }
       });
+
+      const pwdInput = form.querySelector('input[data-strength]');
+      const bar = form.querySelector('#password-strength .bar');
+      const text = form.querySelector('#password-strength-text');
+
+      if (pwdInput && bar && text) {
+        pwdInput.addEventListener('input', function () {
+          const value = pwdInput.value.trim();
+          const score = evaluatePasswordStrength(value);
+
+          const widths = ['0%', '20%', '40%', '60%', '80%', '100%'];
+          const colors = [
+            'transparent',
+            '#ef4444',
+            '#f97316',
+            '#facc15',
+            '#4ade80',
+            '#22c55e',
+          ];
+          const labels = [
+            'Too short',
+            'Very weak',
+            'Weak',
+            'Medium',
+            'Strong',
+            'Very strong',
+          ];
+
+          bar.style.width = widths[score];
+          bar.style.background = colors[score];
+          text.textContent = labels[score];
+        });
+      }
     });
   },
 
@@ -130,7 +192,10 @@ const FormValidator = {
     if (title) {
       const trimmedTitle = title.value.trim();
       if (trimmedTitle.length < 3 || trimmedTitle.length > 60) {
-        FormValidator.showError(title, 'Title must be between 3 and 60 characters');
+        FormValidator.showError(
+          title,
+          'Title must be between 3 and 60 characters'
+        );
         isValid = false;
       } else if (trimmedTitle.length > 0) {
         FormValidator.clearError(title);
@@ -170,6 +235,10 @@ const FormValidator = {
       } else {
         FormValidator.clearError(cycles);
       }
+    }
+
+    if (!isValid && window.NotificationCenter) {
+      NotificationCenter.show('Please check the highlighted fields.', 'error');
     }
 
     return isValid;
@@ -547,9 +616,7 @@ function initInteractiveElements() {
   })();
 
   (function wireAddSessionForm() {
-    const form =
-      document.getElementById('addSessionForm') ||
-      document.querySelector('form[data-validate]');
+    const form = document.getElementById('addSessionForm');
     if (!form) return;
 
     form.addEventListener('submit', async function (event) {

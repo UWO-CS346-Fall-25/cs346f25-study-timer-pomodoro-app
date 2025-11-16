@@ -44,12 +44,17 @@ function calculateSnapshot(goals = []) {
   };
 }
 
-async function listGoals() {
+async function listGoals(userId) {
+  if (!userId) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('focus_goals')
     .select(
       'id, title, target_focus_minutes, priority, due_date, set_reminder, notes, created_at'
     )
+    .eq('user_id', userId)
     .order('due_date', { ascending: true });
 
   if (error) {
@@ -59,7 +64,10 @@ async function listGoals() {
   return (data || []).map(mapRowToGoal);
 }
 
-async function addGoal(input) {
+async function addGoal(userId, input) {
+  if (!userId) {
+    throw new Error('User ID is required to create a goal.');
+  }
   const title = (input.title || '').trim();
   const targetFocusMinutes = Number.parseInt(input.targetFocusMinutes, 10);
   const dueDateInput = (input.dueDate || '').trim();
@@ -107,6 +115,7 @@ async function addGoal(input) {
     due_date: dueDateInput,
     set_reminder: setReminder,
     notes: notes || null,
+    user_id: userId,
   };
 
   const { data, error } = await supabase
@@ -125,8 +134,8 @@ async function addGoal(input) {
   };
 }
 
-async function getSnapshot() {
-  const goals = await listGoals();
+async function getSnapshot(userId) {
+  const goals = await listGoals(userId);
   return calculateSnapshot(goals);
 }
 

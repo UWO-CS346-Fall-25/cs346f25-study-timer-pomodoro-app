@@ -24,12 +24,14 @@
 
 const express = require('express');
 const router = express.Router();
+const userController = require('../controllers/userController');
+const { redirectIfAuthenticated, requireAuth } = require('../middleware/auth');
 
-// Import controllers
-// const userController = require('../controllers/userController');
-
-// Define routes
-// router.get('/register', userController.getRegister);
-// router.post('/register', userController.postRegister);
+router.get('/register', redirectIfAuthenticated, userController.getRegister);
+router.post('/register', redirectIfAuthenticated, userController.postRegister);
+router.get('/login', redirectIfAuthenticated, userController.getLogin);
+router.post('/login', redirectIfAuthenticated, userController.postLogin);
+router.get('/verify', userController.getVerifyStatus);
+router.post('/logout', requireAuth, userController.postLogout);
 
 module.exports = router;
