@@ -1,11 +1,14 @@
 const motivationService = require('../services/motivationService');
+const logger = require('../utils/logger');
 
 async function fetchQuote(options = {}) {
   try {
     const quote = await motivationService.getQuote(options);
     return { quote, error: null };
   } catch (error) {
-    console.error('Failed to fetch motivation quote', error);
+    logger.error('MotivationController#fetchQuote', 'Failed to fetch quote', {
+      error: error.message,
+    });
     return {
       quote: null,
       error:
@@ -15,6 +18,7 @@ async function fetchQuote(options = {}) {
 }
 
 exports.getMotivation = async (req, res) => {
+  logger.info('MotivationController#getMotivation', 'Rendering motivation page');
   const { quote, error } = await fetchQuote();
   res.render('motivation', {
     title: 'Study Motivation',
@@ -26,6 +30,7 @@ exports.getMotivation = async (req, res) => {
 };
 
 exports.postRefreshMotivation = async (req, res) => {
+  logger.info('MotivationController#postRefreshMotivation', 'Refreshing quote on demand');
   const { quote, error } = await fetchQuote({ force: true });
 
   if (!error) {
@@ -35,6 +40,10 @@ exports.postRefreshMotivation = async (req, res) => {
     };
     return res.redirect('/motivation');
   }
+
+  logger.error('MotivationController#postRefreshMotivation', 'Failed to refresh quote', {
+    error,
+  });
 
   res.render('motivation', {
     title: 'Study Motivation',

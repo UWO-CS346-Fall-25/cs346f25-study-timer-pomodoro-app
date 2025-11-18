@@ -106,7 +106,6 @@ const motivationRouter = require('./routes/motivation');
 const settingsController = require('./controllers/settingsController');
 const multer = require('multer');
 const upload = multer();
-
 app.use('/auth', csrfProtection, authRouter);
 app.use('/motivation', csrfProtection, motivationRouter);
 app.use('/', csrfProtection, indexRouter);
