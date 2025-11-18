@@ -70,6 +70,7 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/focus', label: 'Focus Sessions' },
   { href: '/insights', label: 'Progress Insights' },
+  { href: '/motivation', label: 'Motivation' },
   { href: '/about', label: 'About' },
 ];
 
@@ -98,7 +99,9 @@ app.use((req, res, next) => {
 // app.use('/', indexRouter);
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/users');
+const motivationRouter = require('./routes/motivation');
 app.use('/auth', csrfProtection, authRouter);
+app.use('/motivation', csrfProtection, motivationRouter);
 app.use('/', csrfProtection, indexRouter);
 
 // 404 handler
