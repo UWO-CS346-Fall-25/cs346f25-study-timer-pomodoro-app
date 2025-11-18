@@ -9,9 +9,9 @@
         Pull a science-backed quote to kick off your next focus sprint.
       </p>
 
-      <% if (res.locals.flash) { %>
-        <div class="alert <%= res.locals.flash.type === 'error' ? 'alert-error' : 'alert-success' %>">
-          <p><%= res.locals.flash.heading %></p>
+      <% if (flash) { %>
+        <div class="alert <%= flash.type === 'error' ? 'alert-error' : 'alert-success' %>">
+          <p><%= flash.heading %></p>
         </div>
       <% } %>
 

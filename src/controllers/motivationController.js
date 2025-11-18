@@ -21,6 +21,7 @@ exports.getMotivation = async (req, res) => {
     quote,
     error,
     csrfToken: req.csrfToken(),
+    flash: res.locals.flash || null,
   });
 };
 
@@ -40,5 +41,6 @@ exports.postRefreshMotivation = async (req, res) => {
     quote,
     error,
     csrfToken: req.csrfToken(),
+    flash: res.locals.flash || null,
   });
 };
