@@ -1199,13 +1199,13 @@ body.theme-lightning .site-footer,
 }
 
 .settings-card {
-  background: var(--rose-50);
+  background: var(--gold-250);
   padding: 2.5rem 2.8rem;
   border-radius: 28px;
   max-width: 760px;
   margin: 0 auto 4rem auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--rose-100);
+  border: 1px solid var(--gray-500);
 }
 
 .settings-section,
@@ -1230,7 +1230,7 @@ body.theme-lightning .site-footer,
 
 .settings-divider {
   height: 1px;
-  background: var(--rose-200);
+  background: var(--gray-500);
   border: none;
   margin: 2rem 0;
   opacity: 0.6;
@@ -1268,12 +1268,12 @@ body.theme-lightning .site-footer,
 }
 
 .settings-card .button.ghost {
-  background: var(--rose-100);
+  background: var(--white);
   border: 1px solid var(--rose-300);
 }
 
 .settings-card .button.ghost:hover {
-  background: var(--rose-200);
+  background: var(--rose-100);
 }
 
 .settings-card .button.ghost:active {
