@@ -29,5 +29,7 @@ router.post('/focus/sessions', requireAuth, indexController.createSession);
 router.post('/focus/goals', requireAuth, indexController.createGoal);
 router.get('/api/sessions', requireAuth, indexController.getSessionsJson);
 router.get('/api/goals', requireAuth, indexController.getGoalsJson);
+router.get('/settings', requireAuth, indexController.getSettings);
+
 
 module.exports = router;

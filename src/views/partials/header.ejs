@@ -13,10 +13,10 @@
     </ul>
     <div class="account-actions">
       <% if (user) { %>
-        <button class="button ghost small user-pill-btn" type="button">
+        <a href="/settings" class="button ghost small user-pill-btn settings-link">
           <i class="icon" data-lucide="user"></i>
           Hi, <%= user.username %>
-        </button>
+        </a>
         <form action="/auth/logout" method="POST">
           <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
           <button type="submit" class="button ghost small with-icon" id="logOut">

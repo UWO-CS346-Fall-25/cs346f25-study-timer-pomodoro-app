@@ -616,7 +616,9 @@ function initInteractiveElements() {
   })();
 
   (function wireAddSessionForm() {
-    const form = document.getElementById('addSessionForm');
+    const form =
+      document.getElementById('addSessionForm') ||
+      document.querySelector('form[data-validate]');
     if (!form) return;
 
     form.addEventListener('submit', async function (event) {

@@ -1,0 +1,50 @@
+<%- include('partials/head') %>
+<body class="page-settings">
+  <%- include('partials/header') %>
+
+  <main class="section">
+    <div class="container container--narrow">
+
+      <h1 class="page-title">Settings</h1>
+      <p class="lead">Manage your FocusFlow profile and preferences.</p>
+
+      <div class="settings-card">
+
+        <div class="settings-row">
+          <div class="settings-info">
+            <h2>Profile Picture</h2>
+            <p>Upload or update your display picture.</p>
+          </div>
+
+          <button class="button small mint" id="changeProfileBtn">
+            Change profile picture
+          </button>
+        </div>
+
+        <hr class="settings-divider" />
+
+        <div class="settings-row">
+          <div class="settings-info">
+            <h2>Account Preferences</h2>
+            <p>More customization coming soon.</p>
+          </div>
+
+          <button class="button ghost small" disabled>
+            Coming soon
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    document.getElementById('changeProfileBtn').addEventListener('click', () => {
+      alert('Profile picture upload coming soon! ');
+    });
+  </script>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
