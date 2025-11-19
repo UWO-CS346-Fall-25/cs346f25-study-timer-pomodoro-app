@@ -780,6 +780,63 @@ body.theme-lightning .site-footer,
   pointer-events: none;
 }
 
+.goal-form input,
+.goal-form select,
+.goal-form textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(31, 42, 68, 0.18);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 1rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: var(--transition);
+}
+
+.goal-form input:focus,
+.goal-form select:focus,
+.goal-form textarea:focus {
+  outline: 2px solid var(--aqua-400);
+  border-color: transparent;
+}
+
+.goal-form .error {
+  border-color: var(--red-200) !important;
+  outline: 2px solid rgba(220, 38, 38, 0.3) !important;
+}
+
+.goal-form label {
+  font-weight: 600;
+  color: var(--navy-700);
+  margin-top: 1rem;
+  display: block;
+}
+
+.goal-form .label-note {
+  font-weight: normal;
+  color: var(--gray-500);
+  font-size: 0.85rem;
+}
+
+.goal-form textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.goal-form .checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.goal-form input[type="checkbox"] {
+  width: auto;
+  height: auto;
+  accent-color: var(--mint-500);
+}
+
 /* --------------------------------------------- */
 /* Insights Page                                 */
 /* --------------------------------------------- */
@@ -1243,7 +1300,6 @@ body.theme-lightning .site-footer,
     padding: 2rem 1.4rem;
   }
 }
-
 
 /* --------------------------------------------- */
 /* Footer                                        */
