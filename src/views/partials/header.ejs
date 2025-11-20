@@ -13,31 +13,41 @@
     </ul>
     <div class="account-actions">
       <% if (user) { %>
-        <a href="/settings" class="button ghost small user-pill-btn settings-link">
-          <i class="icon" data-lucide="user"></i>
-          Hi, <%= user.username %>
-        </a>
-        <form action="/auth/logout" method="POST">
-          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
-          <button type="submit" class="button ghost small with-icon" id="logOut">
-            <i data-lucide="log-out"></i>
-            Logout
-          </button>
-        </form>
-      <% } else { %>
-        <a
-          href="/auth/login"
-          class="button small <%= currentPath === '/auth/login' ? 'primary' : 'ghost' %>"
-        >
-          Log in
-        </a>
-        <a
-          href="/auth/register"
-          class="button small <%= currentPath === '/auth/register' ? 'primary' : 'ghost' %>"
-        >
-          Sign up
-        </a>
-      <% } %>
+  <a href="/settings" class="button ghost small user-pill-btn settings-link">
+    <% if (user.avatarUrl) { %>
+      <img
+        src="<%= user.avatarUrl %>"
+        alt="avatar"
+        class="avatar-img"
+      />
+    <% } else { %>
+      <i class="icon" data-lucide="user"></i>
+    <% } %>
+    Hi, <%= user.username %>
+  </a>
+
+  <form action="/auth/logout" method="POST">
+    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+    <button type="submit" class="button ghost small with-icon" id="logOut">
+      <i data-lucide="log-out"></i>
+      Logout
+    </button>
+  </form>
+<% } else { %>
+  <a
+    href="/auth/login"
+    class="button small <%= currentPath === '/auth/login' ? 'primary' : 'ghost' %>"
+  >
+    Log in
+  </a>
+  <a
+    href="/auth/register"
+    class="button small <%= currentPath === '/auth/register' ? 'primary' : 'ghost' %>"
+  >
+    Sign up
+  </a>
+<% } %>
+
     </div>
   </nav>
   <% if (flash) { %>

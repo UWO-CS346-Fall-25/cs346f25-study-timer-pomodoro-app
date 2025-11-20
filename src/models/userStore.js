@@ -12,6 +12,7 @@ function mapRow(row) {
     lastLoginAt: row.last_login_at,
     authUserId: row.auth_user_id,
     emailVerifiedAt: row.email_verified_at,
+    avatarUrl: row.avatar_url,
   };
 }
 
@@ -133,6 +134,21 @@ async function markEmailVerified(id, timestamp) {
   return mapRow(data);
 }
 
+async function updateUser(id, data) {
+  const { data: updated, error } = await supabase
+    .from('focus_users')
+    .update(data)
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update user: ${error.message}`);
+  }
+
+  return mapRow(updated);
+}
+
 module.exports = {
   createUser,
   findByEmail,
@@ -140,4 +156,5 @@ module.exports = {
   findById,
   updateLastLogin,
   markEmailVerified,
+  updateUser,
 };

@@ -84,6 +84,9 @@ app.use((req, res, next) => {
   res.locals.formErrors = req.session.formErrors || {};
   res.locals.goalFormValues = req.session.goalFormValues || {};
   res.locals.goalFormErrors = req.session.goalFormErrors || {};
+  if (req.csrfToken) {
+    res.locals.csrfToken = req.csrfToken();
+  }
   delete req.session.flash;
   delete req.session.formValues;
   delete req.session.formErrors;
@@ -100,9 +103,26 @@ app.use((req, res, next) => {
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/users');
 const motivationRouter = require('./routes/motivation');
+const settingsController = require('./controllers/settingsController');
+const multer = require('multer');
+const upload = multer();
+
 app.use('/auth', csrfProtection, authRouter);
 app.use('/motivation', csrfProtection, motivationRouter);
 app.use('/', csrfProtection, indexRouter);
+
+app.post(
+  '/settings/avatar',
+  csrfProtection,
+  upload.single('avatar'),
+  settingsController.updateAvatar
+);
+
+app.post(
+  '/settings/avatar/remove',
+  csrfProtection,
+  settingsController.removeAvatar
+);
 
 // 404 handler
 app.use((req, res) => {

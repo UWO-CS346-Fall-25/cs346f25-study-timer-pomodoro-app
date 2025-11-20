@@ -340,6 +340,7 @@ exports.getGoalsJson = async (req, res, next) => {
 exports.getSettings = (req, res) => {
   res.render('settings', {
     title: 'Settings',
+    csrfToken: req.csrfToken(),
   });
 };
 

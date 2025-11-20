@@ -19,6 +19,12 @@
           <button class="button small mint" id="changeProfileBtn">
             Change profile picture
           </button>
+          <form action="/settings/avatar/remove" method="POST" style="display:inline;">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="button ghost small" type="submit" style="margin-left: 1rem;">
+              Remove picture
+            </button>
+          </form>
         </div>
 
         <hr class="settings-divider" />
@@ -39,11 +45,23 @@
     </div>
   </main>
 
-  <script>
-    document.getElementById('changeProfileBtn').addEventListener('click', () => {
-      alert('Profile picture upload coming soon! ');
-    });
-  </script>
+  <div id="avatarModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2>Update Profile Picture</h2>
+
+      <form id="avatarForm" enctype="multipart/form-data" method="POST" action="/settings/avatar">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="file" id="avatarFile" name="avatar" accept="image/*" required>
+        <button type="submit" class="button primary small" style="margin-top: 1rem;">
+          Upload
+        </button>
+      </form>
+
+      <button id="closeAvatarModal" class="button ghost small" style="margin-top: 1rem;">
+        Cancel
+      </button>
+    </div>
+  </div>
 
   <%- include('partials/footer') %>
 </body>

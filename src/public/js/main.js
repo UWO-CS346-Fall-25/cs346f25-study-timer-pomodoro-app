@@ -63,6 +63,60 @@ document.addEventListener('DOMContentLoaded', function () {
   } catch (e) {
     console.error('initInteractiveElements failed:', e);
   }
+
+  const modal = document.getElementById('avatarModal');
+  const openBtn = document.getElementById('changeProfileBtn');
+  const closeBtn = document.getElementById('closeAvatarModal');
+  const form = document.getElementById('avatarForm');
+
+  if (!modal || !openBtn || !closeBtn || !form) {
+    return;
+  }
+
+  openBtn.addEventListener('click', () => {
+    modal.classList.remove('hidden');
+  });
+
+  closeBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const fileInput = document.getElementById('avatarFile');
+    const file = fileInput && fileInput.files[0];
+    if (!file) return;
+
+    const csrfInput = form.querySelector('input[name="_csrf"]');
+    const csrfToken = csrfInput ? csrfInput.value : '';
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+    if (csrfToken) {
+      formData.append('_csrf', csrfToken);
+    }
+
+    const res = await fetch('/settings/avatar', {
+      method: 'POST',
+      body: formData,
+      headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+      credentials: 'same-origin',
+    });
+
+    const json = await res.json();
+
+    if (json.success) {
+      if (window.NotificationCenter) {
+        NotificationCenter.show('Profile picture updated!', 'success');
+      }
+      setTimeout(() => location.reload(), 700);
+    } else {
+      if (window.NotificationCenter) {
+        NotificationCenter.show(json.error || 'Upload failed', 'error');
+      }
+    }
+  });
 });
 
 window.addEventListener('load', function () {
@@ -314,7 +368,15 @@ function initInteractiveElements() {
   });
 
   const body = document.body;
-  const display = document.querySelector('.timer-display');
+  const display =
+    document.getElementById('timerDisplay') ||
+    document.querySelector('.timer-display');
+
+  if (!display) {
+    console.log('No timer on this page, skipping timer setup.');
+    return;
+  }
+
   const focusInput = document.getElementById('focusMinutes');
   const breakInput = document.getElementById('breakMinutes');
   const cyclesInput = document.getElementById('cycles');
