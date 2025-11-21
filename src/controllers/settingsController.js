@@ -32,7 +32,7 @@ exports.updateAvatar = async (req, res) => {
 
     const freshUrl = `${data.publicUrl}?t=${Date.now()}`;
 
-    const updated = await userStore.updateUser(user.id, {
+    await userStore.updateUser(user.id, {
       avatar_url: freshUrl,
     });
 

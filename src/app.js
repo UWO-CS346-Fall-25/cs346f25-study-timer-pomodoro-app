@@ -111,8 +111,11 @@ app.use('/auth', csrfProtection, authRouter);
 app.use('/motivation', csrfProtection, motivationRouter);
 app.use('/', csrfProtection, indexRouter);
 
+const { requireAuth } = require('./middleware/auth');
+
 app.post(
   '/settings/avatar',
+  requireAuth,
   csrfProtection,
   upload.single('avatar'),
   settingsController.updateAvatar
@@ -120,6 +123,7 @@ app.post(
 
 app.post(
   '/settings/avatar/remove',
+  requireAuth,
   csrfProtection,
   settingsController.removeAvatar
 );
