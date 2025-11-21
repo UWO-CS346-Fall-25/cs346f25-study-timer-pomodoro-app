@@ -88,34 +88,6 @@ Week 8 focuses on the interactive Focus Sessions flow and basic server logic.
 
 Week 9 focuses on front-end polish, form design, and usability improvements.
 
-## External API Integration (Deliverable 6)
-
-Week 12 adds a server-side integration with the [ZenQuotes](https://zenquotes.io/) REST API so students can pull a motivational quote before starting a focus sprint.
-
-- All fetches are performed on the server inside `src/controllers/motivationController.js` via the helper in `src/services/motivationService.js`.
-- Responses are cached for ten minutes to keep the UI fast and respect ZenQuotes' rate limits.
-- The `/motivation` route (protected behind login) renders the quote in `motivation.ejs` and lets the user request a fresh one without touching the client-side fetch API.
-- Errors fall back to the most recently cached quote and show an inline alert instead of crashing the page.
-
-### Configuration
-
-Add the following optional environment variables if you need to point at a mock server or change caching behavior:
-
-```
-ZEN_QUOTES_API_URL=https://zenquotes.io/api
-MOTIVATION_CACHE_TTL_MS=600000
-```
-
-### Verification Steps
-
-1. `npm run dev`
-2. Log in (or register + verify email)
-3. Visit `http://localhost:3000/motivation`
-4. Click **Show another quote** to trigger a refresh
-5. Disconnect from the network temporarily to confirm the error handling path
-
-You should see the latest ZenQuotes entry rendered server-side along with a friendly aside that explains how the integration works.
-
 ## What we already cover
 - Focus session form already meets the 3+ input types + validation requirement (`src/views/focus.ejs`, `src/public/js/main.js`, `POST /focus/sessions`).
 - Routes/controllers already capture submissions and return JSON (`src/controllers/indexController.js`).
