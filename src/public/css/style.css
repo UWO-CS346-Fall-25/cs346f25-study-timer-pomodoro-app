@@ -519,6 +519,9 @@ main.container,
   border-color: transparent;
   outline: none;
 }
+.preset-name {
+  margin-right: 0.35rem;
+}
 
 .preset-name {
   font-weight: 600;
