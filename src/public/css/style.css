@@ -295,6 +295,12 @@ main.container,
   color: var(--navy-900);
   border-color: transparent;
 }
+
+.preset-panel .chip {
+  width: 100%;
+  justify-content: space-between;
+}
+
 #logOut {
   background: red;
   color: white;
@@ -519,6 +525,7 @@ main.container,
   border-color: transparent;
   outline: none;
 }
+
 .preset-name {
   margin-right: 0.35rem;
 }
@@ -853,6 +860,19 @@ body.theme-lightning .site-footer,
   width: auto;
   height: auto;
   accent-color: var(--mint-500);
+}
+
+.button-controls {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 1rem 1rem;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.timer-controls,
+.interval-toggle {
+  display: contents;
 }
 
 /* --------------------------------------------- */
