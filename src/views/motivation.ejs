@@ -1,0 +1,60 @@
+<%- include('partials/head', { title }) %>
+<body class="page-motivation">
+  <%- include('partials/header') %>
+
+  <main class="container motivation-container">
+    <section class="motivation-card">
+      <h1>Study motivation</h1>
+      <p class="motivation-subhead">
+        Pull a science-backed quote to kick off your next focus sprint.
+      </p>
+
+      <% if (flash) { %>
+        <div class="alert <%= flash.type === 'error' ? 'alert-error' : 'alert-success' %>">
+          <p><%= flash.heading %></p>
+        </div>
+      <% } %>
+
+      <% if (error) { %>
+        <div class="alert alert-error">
+          <p><%= error %></p>
+        </div>
+      <% } %>
+
+      <% if (quote) { %>
+        <blockquote class="motivation-quote">
+          <p class="quote-text">&ldquo;<%= quote.text %>&rdquo;</p>
+          <footer>
+            — <strong><%= quote.author %></strong>
+          </footer>
+        </blockquote>
+      <% } else { %>
+        <div class="empty-state">
+          <p>We&rsquo;re waiting on the ZenQuotes service. Try refreshing in a bit.</p>
+        </div>
+      <% } %>
+
+      <form action="/motivation/refresh" method="POST" class="motivation-actions">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <button type="submit" class="button primary">Show another quote</button>
+        <a class="button ghost" href="/focus">Jump back into FocusFlow</a>
+      </form>
+    </section>
+
+    <aside class="motivation-aside">
+      <h2>How it works</h2>
+      <p>
+        Quotes are sourced from <a href="https://zenquotes.io/" target="_blank" rel="noopener">ZenQuotes</a>.
+        We cache responses for 10 minutes to keep the API snappy and respect their rate limits.
+      </p>
+      <ul class="motivation-details">
+        <li>Server-side fetch keeps API keys off the client.</li>
+        <li>Errors fall back to your most recent quote and stay logged in the console for debugging.</li>
+        <li>Try pulling a new quote before a deep-work block to set an intention.</li>
+      </ul>
+    </aside>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

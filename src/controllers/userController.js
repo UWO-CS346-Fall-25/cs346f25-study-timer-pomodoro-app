@@ -18,7 +18,8 @@ const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'focusflow.sid';
 const DEFAULT_SESSION_MAX_AGE =
   Number.parseInt(process.env.SESSION_MAX_AGE, 10) || 1000 * 60 * 60 * 24;
 const LONG_SESSION_MAX_AGE =
-  Number.parseInt(process.env.SESSION_LONG_MAX_AGE, 10) || DEFAULT_SESSION_MAX_AGE * 30;
+  Number.parseInt(process.env.SESSION_LONG_MAX_AGE, 10) ||
+  DEFAULT_SESSION_MAX_AGE * 30;
 
 function resolveAppBaseUrl(req) {
   const envBase = (process.env.APP_BASE_URL || '').trim();
@@ -38,7 +39,8 @@ function resolveAppBaseUrl(req) {
 }
 
 function buildVerificationRedirectUrl(baseUrl) {
-  const normalizedBase = (baseUrl || '').trim().replace(/\/+$/, '') || 'http://localhost:3000';
+  const normalizedBase =
+    (baseUrl || '').trim().replace(/\/+$/, '') || 'http://localhost:3000';
   return `${normalizedBase}/auth/verify`;
 }
 
@@ -59,7 +61,10 @@ async function findSupabaseUserByEmail(email) {
   let page = 1;
   const perPage = 100;
   while (page && page <= 50) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
     if (error) {
       console.warn('Failed to list Supabase users', error);
       return null;
@@ -173,15 +178,24 @@ function authenticateSession(req, user) {
     id: user.id,
     username: user.username,
     email: user.email,
+    avatarUrl: user.avatarUrl,
   };
 }
 
-async function createSupabaseAuthAccount({ email, password, username, verificationRedirect }) {
+async function createSupabaseAuthAccount({
+  email,
+  password,
+  username,
+  verificationRedirect,
+}) {
   const normalizedEmail = (email || '').trim().toLowerCase();
   const normalizedUsername = (username || '').trim();
   const redirectTo = verificationRedirect || buildVerificationRedirectUrl();
   if (!normalizedEmail) {
-    return { ok: false, error: new Error('Email is required for account creation.') };
+    return {
+      ok: false,
+      error: new Error('Email is required for account creation.'),
+    };
   }
 
   const { data, error } = await supabase.auth.admin.createUser({
@@ -206,7 +220,9 @@ async function createSupabaseAuthAccount({ email, password, username, verificati
     return { ok: false, error };
   }
 
-  await sendVerificationInvite(normalizedEmail, redirectTo, { username: normalizedUsername });
+  await sendVerificationInvite(normalizedEmail, redirectTo, {
+    username: normalizedUsername,
+  });
 
   return {
     ok: true,
@@ -217,7 +233,9 @@ async function createSupabaseAuthAccount({ email, password, username, verificati
 
 async function fetchSupabaseAuthUser(user) {
   if (!user?.authUserId) return null;
-  const { data, error } = await supabase.auth.admin.getUserById(user.authUserId);
+  const { data, error } = await supabase.auth.admin.getUserById(
+    user.authUserId
+  );
   if (!error && data?.user) {
     return data.user;
   }
@@ -235,7 +253,8 @@ async function ensureEmailVerified(user) {
     // If we cannot fetch the auth user, allow login to proceed.
     return true;
   }
-  const confirmedAt = authUser.email_confirmed_at || authUser.confirmed_at || null;
+  const confirmedAt =
+    authUser.email_confirmed_at || authUser.confirmed_at || null;
 
   if (!confirmedAt) {
     return false;
@@ -302,7 +321,9 @@ exports.postRegister = async (req, res, next) => {
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const verificationRedirect = buildVerificationRedirectUrl(resolveAppBaseUrl(req));
+    const verificationRedirect = buildVerificationRedirectUrl(
+      resolveAppBaseUrl(req)
+    );
     let authUserId = null;
     const supabaseAccount = await createSupabaseAuthAccount({
       email,
@@ -315,7 +336,9 @@ exports.postRegister = async (req, res, next) => {
         supabaseAccount.error?.message ||
         'We could not trigger the verification email. Try again in a moment.';
       if (
-        supabaseAccount.error?.message?.toLowerCase().includes('already registered') ||
+        supabaseAccount.error?.message
+          ?.toLowerCase()
+          .includes('already registered') ||
         supabaseAccount.error?.status === 422
       ) {
         errors.email = 'That email is already registered.';
@@ -352,7 +375,8 @@ exports.postRegister = async (req, res, next) => {
 
     req.session.flash = {
       type: 'success',
-      heading: 'Account created! Check your inbox to verify your email, then log in.',
+      heading:
+        'Account created! Check your inbox to verify your email, then log in.',
     };
     const redirectTo = '/auth/login';
 
@@ -397,7 +421,8 @@ exports.getVerifyStatus = (req, res) => {
 exports.postLogin = async (req, res, next) => {
   try {
     const { email, password, rememberMe } = req.body;
-    const rememberMeChecked = rememberMe === 'on' || rememberMe === true || rememberMe === 'true';
+    const rememberMeChecked =
+      rememberMe === 'on' || rememberMe === true || rememberMe === 'true';
     const values = { email, rememberMe: rememberMeChecked };
     const errors = buildLoginErrors({ email, password });
 
@@ -431,7 +456,8 @@ exports.postLogin = async (req, res, next) => {
 
     const verified = await ensureEmailVerified(user);
     if (!verified) {
-      errors.form = 'Please verify your email before logging in. Check your inbox for the link.';
+      errors.form =
+        'Please verify your email before logging in. Check your inbox for the link.';
       return handleErrorResponse(req, res, 'auth/login', 401, {
         title: 'Log In',
         errors,
@@ -442,7 +468,9 @@ exports.postLogin = async (req, res, next) => {
     authenticateSession(req, user);
     await userStore.updateLastLogin(user.id);
     req.session.rememberMe = rememberMeChecked;
-    req.session.cookie.maxAge = rememberMeChecked ? LONG_SESSION_MAX_AGE : DEFAULT_SESSION_MAX_AGE;
+    req.session.cookie.maxAge = rememberMeChecked
+      ? LONG_SESSION_MAX_AGE
+      : DEFAULT_SESSION_MAX_AGE;
 
     req.session.flash = {
       type: 'success',

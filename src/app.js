@@ -70,6 +70,7 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/focus', label: 'Focus Sessions' },
   { href: '/insights', label: 'Progress Insights' },
+  { href: '/motivation', label: 'Motivation' },
   { href: '/about', label: 'About' },
 ];
 
@@ -83,6 +84,9 @@ app.use((req, res, next) => {
   res.locals.formErrors = req.session.formErrors || {};
   res.locals.goalFormValues = req.session.goalFormValues || {};
   res.locals.goalFormErrors = req.session.goalFormErrors || {};
+  if (req.csrfToken) {
+    res.locals.csrfToken = req.csrfToken();
+  }
   delete req.session.flash;
   delete req.session.formValues;
   delete req.session.formErrors;
@@ -98,8 +102,31 @@ app.use((req, res, next) => {
 // app.use('/', indexRouter);
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/users');
+const motivationRouter = require('./routes/motivation');
+const settingsController = require('./controllers/settingsController');
+const multer = require('multer');
+const upload = multer();
+
 app.use('/auth', csrfProtection, authRouter);
+app.use('/motivation', csrfProtection, motivationRouter);
 app.use('/', csrfProtection, indexRouter);
+
+const { requireAuth } = require('./middleware/auth');
+
+app.post(
+  '/settings/avatar',
+  requireAuth,
+  csrfProtection,
+  upload.single('avatar'),
+  settingsController.updateAvatar
+);
+
+app.post(
+  '/settings/avatar/remove',
+  requireAuth,
+  csrfProtection,
+  settingsController.removeAvatar
+);
 
 // 404 handler
 app.use((req, res) => {

@@ -22,15 +22,17 @@
         <p class="timer-label" id="timerLabel">Current interval: <%= (focusPresets && focusPresets[0]?.label) || 'Classic' %>
         </p>
         <div class="timer-display" id="timerDisplay">25:00</div>
-        <div class="timer-controls">
-          <button class="button primary" type="button">Start </button>
-          <button class="button ghost" type="button">Pause</button>
-          <button class="button ghost" type="button">Reset</button>
-        </div>
-        <div class="interval-toggle">
-          <button class="chip active" id="chipFocus" type="button">Focus</button>
-          <button class="chip" id="chipBreak" type="button">Break</button>
-          <button class="chip" id="chipLong" type="button">Long Break</button>
+        <div class="button-controls">
+          <div class="timer-controls">
+            <button class="button primary" type="button">Start </button>
+            <button class="button ghost" type="button">Pause</button>
+            <button class="button ghost" type="button">Reset</button>
+          </div>
+          <div class="interval-toggle">
+            <button class="chip active" id="chipFocus" type="button">Focus</button>
+            <button class="chip" id="chipBreak" type="button">Break</button>
+            <button class="chip" id="chipLong" type="button">Long Break</button>
+          </div>
         </div>
       </div>
 

@@ -336,3 +336,11 @@ exports.getGoalsJson = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getSettings = (req, res) => {
+  res.render('settings', {
+    title: 'Settings',
+    csrfToken: req.csrfToken(),
+  });
+};
+

@@ -155,5 +155,3 @@
 
   window.FormValidator = FormValidator;
 })(window);
-(function (window) {
-  /* eslint-env browser */
