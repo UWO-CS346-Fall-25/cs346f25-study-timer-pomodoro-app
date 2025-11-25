@@ -377,6 +377,87 @@ function initInteractiveElements() {
     return;
   }
 
+  let timerInterval = null;
+  let remainingSeconds = 0;
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function updateDisplay() {
+    display.textContent = formatTime(remainingSeconds);
+  }
+
+  function startTimer() {
+    if (timerInterval) return;
+    timerInterval = setInterval(() => {
+      remainingSeconds--;
+      updateDisplay();
+
+      if (remainingSeconds <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+
+        if (window.NotificationCenter)
+          NotificationCenter.show('Interval complete!', 'success');
+      }
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+
+  function resetTimer(defaultMinutes) {
+    pauseTimer();
+    remainingSeconds = defaultMinutes * 60;
+    updateDisplay();
+  }
+
+  const startBtn = document.querySelector(
+    '.timer-controls button:nth-child(1)'
+  );
+  const pauseBtn = document.querySelector(
+    '.timer-controls button:nth-child(2)'
+  );
+  const resetBtn = document.querySelector(
+    '.timer-controls button:nth-child(3)'
+  );
+
+  function currentIntervalType() {
+    if (document.getElementById('chipBreak').classList.contains('active'))
+      return 'break';
+    if (document.getElementById('chipLong').classList.contains('active'))
+      return 'long';
+    return 'focus';
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (remainingSeconds <= 0) {
+      const type = currentIntervalType();
+      const min = minutesFor(type);
+      remainingSeconds = min * 60;
+    }
+    startTimer();
+  });
+
+  pauseBtn.addEventListener('click', () => {
+    pauseTimer();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    const type = currentIntervalType();
+    const min = minutesFor(type);
+    resetTimer(min);
+  });
+
   const focusInput = document.getElementById('focusMinutes');
   const breakInput = document.getElementById('breakMinutes');
   const cyclesInput = document.getElementById('cycles');
@@ -431,6 +512,10 @@ function initInteractiveElements() {
 
       const m = parseInt(btn.dataset.focus, 10) || 0;
       display.textContent = String(m).padStart(2, '0') + ':00';
+
+      pauseTimer();
+      remainingSeconds = m * 60;
+      updateDisplay();
 
       presetChips.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
@@ -521,19 +606,28 @@ function initInteractiveElements() {
   });
 
   focusBtn?.addEventListener('click', () => {
-    setTimer(minutesFor('focus'));
+    pauseTimer();
+    const min = minutesFor('focus');
+    remainingSeconds = min * 60;
+    updateDisplay();
     setActiveInterval('focus');
     localStorage.setItem(K.interval, 'focus');
   });
 
   breakBtn?.addEventListener('click', () => {
-    setTimer(minutesFor('break'));
+    pauseTimer();
+    const min = minutesFor('break');
+    remainingSeconds = min * 60;
+    updateDisplay();
     setActiveInterval('break');
     localStorage.setItem(K.interval, 'break');
   });
 
   longBreakBtn?.addEventListener('click', () => {
-    setTimer(minutesFor('long'));
+    pauseTimer();
+    const min = minutesFor('long');
+    remainingSeconds = min * 60;
+    updateDisplay();
     setActiveInterval('long');
     localStorage.setItem(K.interval, 'long');
   });
@@ -647,6 +741,9 @@ function initInteractiveElements() {
       if (cyclesInput) cyclesInput.value = cycles;
 
       if (timerDisplay) timerDisplay.textContent = toMMSS(focusM);
+      remainingSeconds = focusM * 60;
+      updateDisplay();
+
       if (timerLabel) timerLabel.textContent = `Current interval: ${title}`;
 
       setFocusActive();
