@@ -2,8 +2,10 @@ const motivationService = require('../services/motivationService');
 const logger = require('../utils/logger');
 
 async function fetchQuote(options = {}) {
+  logger.info('MotivationController#fetchQuote', 'Fetching quote', options);
   try {
     const quote = await motivationService.getQuote(options);
+    logger.info('MotivationController#fetchQuote', 'Quote fetch success');
     return { quote, error: null };
   } catch (error) {
     logger.error('MotivationController#fetchQuote', 'Failed to fetch quote', {
@@ -20,6 +22,7 @@ async function fetchQuote(options = {}) {
 exports.getMotivation = async (req, res) => {
   logger.info('MotivationController#getMotivation', 'Rendering motivation page');
   const { quote, error } = await fetchQuote();
+
   res.render('motivation', {
     title: 'Study Motivation',
     quote,
