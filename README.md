@@ -174,6 +174,24 @@ MOTIVATION_CACHE_TTL_MS=600000
 
 You should see the latest ZenQuotes entry rendered server-side along with a friendly aside that explains how the integration works.
 
+## Live Timer & Polish (Deliverable 7)
+
+Week 13 turns the static Pomodoro mock-up into a working timer and finishes the UX polish required for the final showcase.
+
+- The countdown now runs entirely in the browser (`src/public/js/main.js`), with start/pause/reset controls, automatic transitions between focus/break/long-break intervals, cycle tracking, and NotificationCenter toasts when a block finishes.
+- Timer presets and queued sessions feed directly into the countdown. Switching presets or selecting a queued session updates the durations/cycle targets and resets the timer state.
+- Cycle metadata (“Cycle 2 of 4 · Break”) appears under the timer, and long breaks trigger automatically after the final cycle.
+- The settings page improvements from Deliverable 6 (avatar upload/remove) remain available and are now wired behind authenticated routes.
+
+### Verification Steps
+
+1. `npm run dev` & log in.
+2. Navigate to `/focus`.
+3. Click **Start** – the timer should count down and the **Pause** button should enable.
+4. Let the interval finish (or set a short preset) and watch the automatic transition to a break + toast notification.
+5. Use the **Reset** button and a queued session/preset to confirm the timer picks up the new durations/cycle counts.
+6. Toggle between Focus/Break/Long buttons to ensure manual changes reset the display without starting the countdown.
+
 ## Project Structure
 
 ```

@@ -371,9 +371,16 @@ function initInteractiveElements() {
   const display =
     document.getElementById('timerDisplay') ||
     document.querySelector('.timer-display');
+  const timerLabel =
+    document.getElementById('timerLabel') ||
+    document.querySelector('.timer-label');
+  const timerMeta = document.getElementById('timerMeta');
+  const startBtn = document.getElementById('timerStart');
+  const pauseBtn = document.getElementById('timerPause');
+  const resetBtn = document.getElementById('timerReset');
 
-  if (!display) {
-    console.log('No timer on this page, skipping timer setup.');
+  if (!display || !startBtn || !pauseBtn || !resetBtn) {
+    console.log('Timer controls not found. Skipping timer wiring.');
     return;
   }
 
@@ -502,6 +509,8 @@ function initInteractiveElements() {
     };
     localStorage.setItem(K.mode, 'custom');
     localStorage.setItem(K.custom, JSON.stringify(payload));
+    timerState.totalCycles = getPlannedCycles();
+    resetTimer({ hard: true });
   };
 
   presetChips.forEach((btn) => {
@@ -561,10 +570,183 @@ function initInteractiveElements() {
   const [focusBtn, breakBtn, longBreakBtn] = intervalBtns;
 
   const PRESET_MINUTES = {
-    classic: { focus: 25, break: 5, long: 15 },
-    'deep work': { focus: 50, break: 10, long: 20 },
-    lightning: { focus: 15, break: 3, long: 13 },
+    classic: { focus: 25, break: 5, long: 15, cycles: 4 },
+    'deep work': { focus: 50, break: 10, long: 20, cycles: 2 },
+    lightning: { focus: 15, break: 3, long: 13, cycles: 3 },
   };
+
+  const savedInterval = localStorage.getItem(K.interval);
+  const timerState = {
+    interval: ['focus', 'break', 'long'].includes(savedInterval)
+      ? savedInterval
+      : 'focus',
+    remainingSeconds: null,
+    timerId: null,
+    completedCycles: 0,
+    totalCycles: 0,
+  };
+
+  function getPresetConfig(name) {
+    const key = (name || '').toLowerCase();
+    return PRESET_MINUTES[key] || PRESET_MINUTES.classic;
+  }
+
+  function getDurations() {
+    const mode = localStorage.getItem(K.mode) || 'preset';
+    if (mode === 'custom') {
+      const custom = getCustomSession();
+      if (custom) {
+        const focus = parseInt(custom.focus, 10) || 25;
+        const brk = parseInt(custom.break, 10) || 5;
+        const lng = parseInt(custom.long || brk * 2 || 15, 10);
+        return { focus, break: brk, long: lng };
+      }
+    }
+    const presetName = localStorage.getItem(K.preset) || 'classic';
+    const config = getPresetConfig(presetName);
+    return {
+      focus: config.focus,
+      break: config.break,
+      long: config.long,
+    };
+  }
+
+  function getPlannedCycles() {
+    const mode = localStorage.getItem(K.mode) || 'preset';
+    if (mode === 'custom') {
+      const custom = getCustomSession();
+      if (custom && custom.cycles) {
+        return Math.max(parseInt(custom.cycles, 10) || 1, 1);
+      }
+    }
+    const presetName = localStorage.getItem(K.preset) || 'classic';
+    const config = getPresetConfig(presetName);
+    return config.cycles || 4;
+  }
+
+  function formatSeconds(seconds) {
+    const safe = Math.max(0, seconds || 0);
+    const mins = Math.floor(safe / 60);
+    const secs = safe % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
+  function updateTimerDisplay() {
+    display.textContent = formatSeconds(timerState.remainingSeconds);
+  }
+
+  function updateTimerMeta() {
+    if (!timerMeta) return;
+    const intervalLabel =
+      timerState.interval === 'break'
+        ? 'Break'
+        : timerState.interval === 'long'
+          ? 'Long break'
+          : 'Focus';
+    let activeCycle;
+    if (timerState.interval === 'focus') {
+      activeCycle = timerState.completedCycles + 1;
+    } else if (timerState.interval === 'long') {
+      activeCycle = timerState.totalCycles;
+    } else {
+      activeCycle = Math.max(timerState.completedCycles, 1);
+    }
+    timerMeta.textContent = `Cycle ${Math.min(activeCycle, timerState.totalCycles)} of ${timerState.totalCycles} · ${intervalLabel}`;
+  }
+
+  function setRunningState(running) {
+    if (!startBtn || !pauseBtn) return;
+    startBtn.disabled = running;
+    pauseBtn.disabled = !running;
+  }
+
+  function stopCountdown() {
+    if (timerState.timerId) {
+      clearInterval(timerState.timerId);
+      timerState.timerId = null;
+    }
+    setRunningState(false);
+  }
+
+  function notify(message, type = 'info') {
+    if (window.NotificationCenter && typeof NotificationCenter.show === 'function') {
+      NotificationCenter.show(message, type);
+    }
+  }
+
+  function setIntervalDuration(interval) {
+    const durations = getDurations();
+    const minutes = durations[interval] || durations.focus;
+    timerState.remainingSeconds = Math.max(minutes * 60, 5);
+    updateTimerDisplay();
+    updateTimerMeta();
+  }
+
+  function resetTimer({ hard = false, interval } = {}) {
+    stopCountdown();
+    timerState.totalCycles = getPlannedCycles();
+    if (hard) {
+      timerState.completedCycles = 0;
+    }
+    if (interval) {
+      timerState.interval = interval;
+    }
+    setActiveInterval(timerState.interval);
+    setIntervalDuration(timerState.interval);
+  }
+
+  function handleIntervalComplete() {
+    stopCountdown();
+    if (timerState.interval === 'focus') {
+      timerState.completedCycles += 1;
+      if (timerState.completedCycles >= timerState.totalCycles) {
+        notify('Focus streak complete! Enjoy a longer break.', 'success');
+        timerState.completedCycles = 0;
+        timerState.interval = 'long';
+      } else {
+        notify('Focus block complete! Take a short break.', 'success');
+        timerState.interval = 'break';
+      }
+    } else {
+      if (timerState.interval === 'long') {
+        notify('Long break complete! Back to focus.', 'info');
+      } else {
+        notify('Break finished! Dive back into focus.', 'info');
+      }
+      timerState.interval = 'focus';
+    }
+    setActiveInterval(timerState.interval);
+    setIntervalDuration(timerState.interval);
+    startTimer();
+  }
+
+  function tick() {
+    timerState.remainingSeconds -= 1;
+    updateTimerDisplay();
+    if (timerState.remainingSeconds <= 0) {
+      handleIntervalComplete();
+    }
+  }
+
+  function startTimer() {
+    if (timerState.timerId) return;
+    if (timerState.remainingSeconds === null) {
+      setIntervalDuration(timerState.interval);
+    }
+    timerState.timerId = setInterval(tick, 1000);
+    setRunningState(true);
+  }
+
+  function pauseTimer() {
+    stopCountdown();
+  }
+
+  timerState.totalCycles = getPlannedCycles();
+  resetTimer({ hard: false, interval: timerState.interval });
+
+  startBtn.addEventListener('click', startTimer);
+  pauseBtn.addEventListener('click', pauseTimer);
+  resetBtn.addEventListener('click', () => resetTimer({ hard: true, interval: 'focus' }));
 
   const minutesFor = (type) => {
     if (localStorage.getItem(K.mode) === 'custom') {
@@ -583,57 +765,50 @@ function initInteractiveElements() {
   let currentPreset = 'classic';
 
   function setTimer(min) {
-    display.textContent = String(min).padStart(2, '0') + ':00';
+    timerState.remainingSeconds = Math.max(Math.round(min * 60), 0);
+    updateTimerDisplay();
+    updateTimerMeta();
   }
 
   function setActiveInterval(which) {
+    const normalized = which === 'long' ? 'long' : which;
+    timerState.interval = normalized;
+    localStorage.setItem(K.interval, normalized);
     intervalBtns.forEach((b) => b.classList.remove('active'));
-    if (which === 'focus') focusBtn.classList.add('active');
-    if (which === 'break') breakBtn.classList.add('active');
-    if (which === 'long') longBreakBtn.classList.add('active');
+    if (normalized === 'focus') focusBtn?.classList.add('active');
+    if (normalized === 'break') breakBtn?.classList.add('active');
+    if (normalized === 'long') longBreakBtn?.classList.add('active');
   }
 
   presetChips.forEach((btn) => {
     btn.addEventListener('click', () => {
-      const name =
-        btn.querySelector('.preset-name')?.textContent.trim().toLowerCase() ||
-        'classic';
+      const label = btn.querySelector('.preset-name')?.textContent.trim() || 'Classic';
+      const name = label.toLowerCase();
       currentPreset = name in PRESET_MINUTES ? name : 'classic';
-
-      setTimer(PRESET_MINUTES[currentPreset].focus);
-      setActiveInterval('focus');
+      localStorage.setItem(K.mode, 'preset');
+      localStorage.setItem(K.preset, currentPreset);
+      localStorage.setItem(K.interval, 'focus');
+      localStorage.removeItem(K.custom);
+      timerState.completedCycles = 0;
+      timerState.totalCycles = getPlannedCycles();
+      if (timerLabel) {
+        timerLabel.textContent = `Current interval: ${label}`;
+      }
+      resetTimer({ hard: true, interval: 'focus' });
     });
   });
 
   focusBtn?.addEventListener('click', () => {
-    pauseTimer();
-    const min = minutesFor('focus');
-    remainingSeconds = min * 60;
-    updateDisplay();
-    setActiveInterval('focus');
-    localStorage.setItem(K.interval, 'focus');
+    resetTimer({ hard: false, interval: 'focus' });
   });
 
   breakBtn?.addEventListener('click', () => {
-    pauseTimer();
-    const min = minutesFor('break');
-    remainingSeconds = min * 60;
-    updateDisplay();
-    setActiveInterval('break');
-    localStorage.setItem(K.interval, 'break');
+    resetTimer({ hard: false, interval: 'break' });
   });
 
   longBreakBtn?.addEventListener('click', () => {
-    pauseTimer();
-    const min = minutesFor('long');
-    remainingSeconds = min * 60;
-    updateDisplay();
-    setActiveInterval('long');
-    localStorage.setItem(K.interval, 'long');
+    resetTimer({ hard: false, interval: 'long' });
   });
-
-  setTimer(minutesFor('focus'));
-  setActiveInterval('focus');
 
   (function restoreLastState() {
     const savedMode = localStorage.getItem(K.mode) || 'preset';
@@ -701,13 +876,6 @@ function initInteractiveElements() {
     const list = document.getElementById('sessionList');
     if (!list) return;
 
-    const timerLabel =
-      document.getElementById('timerLabel') ||
-      document.querySelector('.timer-label');
-    const timerDisplay =
-      document.getElementById('timerDisplay') ||
-      document.querySelector('.timer-display');
-
     const focusInput = document.getElementById('focusMinutes');
     const breakInput = document.getElementById('breakMinutes');
     const cyclesInput = document.getElementById('cycles');
@@ -740,10 +908,14 @@ function initInteractiveElements() {
       if (breakInput) breakInput.value = breakM;
       if (cyclesInput) cyclesInput.value = cycles;
 
-      if (timerDisplay) timerDisplay.textContent = toMMSS(focusM);
-      remainingSeconds = focusM * 60;
-      updateDisplay();
+<<<<<<< HEAD
+      if (display) display.textContent = toMMSS(focusM);
+      timerState.remainingSeconds = focusM * 60;
+      updateTimerMeta();
 
+=======
+      if (display) display.textContent = toMMSS(focusM);
+>>>>>>> 5d05bd3 (Implement live Pomodoro timer)
       if (timerLabel) timerLabel.textContent = `Current interval: ${title}`;
 
       setFocusActive();
@@ -760,6 +932,8 @@ function initInteractiveElements() {
         btn.dataset.sessionId || `${title}|${focusM}|${breakM}|${cycles}`;
       setCurrentSessionId(targetId);
       markActiveQueueButton(targetId);
+      timerState.totalCycles = getPlannedCycles();
+      resetTimer({ hard: true });
     }
 
     list.addEventListener('click', (event) => {
@@ -848,16 +1022,10 @@ function initInteractiveElements() {
 
         const session = payload.session;
         if (session) {
-          const labelEl =
-            document.getElementById('timerLabel') ||
-            document.querySelector('.timer-label');
-          const displayEl =
-            document.getElementById('timerDisplay') ||
-            document.querySelector('.timer-display');
-          if (labelEl)
-            labelEl.textContent = `Current interval: ${session.title}`;
-          if (displayEl)
-            displayEl.textContent =
+          if (timerLabel)
+            timerLabel.textContent = `Current interval: ${session.title}`;
+          if (display)
+            display.textContent =
               String(session.focusMinutes).padStart(2, '0') + ':00';
 
           const chipFocus = document.getElementById('chipFocus');
@@ -870,17 +1038,19 @@ function initInteractiveElements() {
 
           localStorage.setItem(K.mode, 'custom');
           localStorage.setItem(K.interval, 'focus');
-          localStorage.setItem(
-            K.custom,
-            JSON.stringify({
-              title: session.title,
-              focus: session.focusMinutes,
-              break: session.breakMinutes,
-              cycles: session.cycles,
-            })
-          );
-          setCurrentSessionId(session.id);
-        }
+        localStorage.setItem(
+          K.custom,
+          JSON.stringify({
+            title: session.title,
+            focus: session.focusMinutes,
+            break: session.breakMinutes,
+            cycles: session.cycles,
+          })
+        );
+        setCurrentSessionId(session.id);
+        timerState.totalCycles = getPlannedCycles();
+        resetTimer({ hard: true });
+      }
 
         await refreshSessions();
       } catch (error) {

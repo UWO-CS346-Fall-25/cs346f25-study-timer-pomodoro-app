@@ -254,6 +254,13 @@ main.container,
   box-shadow: var(--shadow-card);
 }
 
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
 .button.is-loading {
   opacity: 0.65;
   pointer-events: none;
@@ -488,11 +495,22 @@ main.container,
   color: var(--navy-900);
 }
 
+.timer-meta {
+  font-size: 0.95rem;
+  color: var(--gray-500);
+  margin-top: -1rem;
+  margin-bottom: 2rem;
+}
+
 .timer-controls {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 2rem;
+}
+
+.timer-controls .button {
+  min-width: 90px;
 }
 
 .interval-toggle {
