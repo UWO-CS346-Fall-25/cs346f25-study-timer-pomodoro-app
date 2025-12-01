@@ -183,6 +183,7 @@ MOTIVATION_CACHE_TTL_MS=600000
 
 You should see the latest ZenQuotes entry rendered server-side along with a friendly aside that explains how the integration works.
 
+<<<<<<< HEAD
 ## Error Handling & Logging
 
 - Every controller logs the beginning/end of critical actions via `src/utils/logger.js`, including route context, user ids (when available), and error summaries.
@@ -190,6 +191,8 @@ You should see the latest ZenQuotes entry rendered server-side along with a frie
 - The global Express error handler renders `views/error.ejs`, while route-level handlers fall back to safe redirects (e.g., `/focus`, `/auth/login`).
 - Settings uploads, session/goal creation, and authentication flows all include structured logging so we can trace issues in production.
 
+=======
+>>>>>>> 5d05bd3 (Implement live Pomodoro timer)
 ## Live Timer & Polish (Deliverable 7)
 
 Week 13 turns the static Pomodoro mock-up into a working timer and finishes the UX polish required for the final showcase.
@@ -198,7 +201,10 @@ Week 13 turns the static Pomodoro mock-up into a working timer and finishes the 
 - Timer presets and queued sessions feed directly into the countdown. Switching presets or selecting a queued session updates the durations/cycle targets and resets the timer state.
 - Cycle metadata (“Cycle 2 of 4 · Break”) appears under the timer, and long breaks trigger automatically after the final cycle.
 - The settings page improvements from Deliverable 6 (avatar upload/remove) remain available and are now wired behind authenticated routes.
+<<<<<<< HEAD
 - Added structured logging, controller comments, and expanded README guidance per the Deliverable 7 rubric.
+=======
+>>>>>>> 5d05bd3 (Implement live Pomodoro timer)
 
 ### Verification Steps
 
