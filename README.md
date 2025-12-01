@@ -11,6 +11,15 @@ FocusFlow is our CS346 semester project for building a study timer web applicati
 - 📝 **Clean Code** - ESLint, Prettier, best practices
 - 🎓 **Educational** - Well-documented, instructional code
 
+## Technical Architecture
+
+- **Routes** (`src/routes`) map URLs to controllers.
+- **Controllers** (`src/controllers`) validate input, call models/services, log outcomes, and render EJS or JSON responses.
+- **Models/Stores** (`src/models`) wrap Supabase/Postgres calls, normalize rows, and propagate structured errors.
+- **Views** (`src/views`) are EJS templates that consume controller-provided data.
+
+Request flow example: `POST /focus/sessions` → `indexController.createSession` → `sessionStore.addSession` → log outcome → render redirect/JSON. Shared middleware in `app.js` adds CSRF tokens, flash messages, nav data, and user context for every view.
+
 ## Quick Start
 
 1. **Clone the repository**
@@ -152,8 +161,8 @@ Week 12 adds a server-side integration with the [ZenQuotes](https://zenquotes.io
 - Responses are cached for ten minutes to keep the UI fast and respect ZenQuotes' rate limits.
 - The `/motivation` route (protected behind login) renders the quote in `motivation.ejs` and lets the user request a fresh one without touching the client-side fetch API.
 - Errors fall back to the most recently cached quote and show an inline alert instead of crashing the page.
-- (Extra) Created a settings page which allows users to upload, update, and remove, profile pictures which are stored using supabase.
-- (Extra) Added CSS to settings page as well as the focus goal form in focus sessions.
+- (Extra) Created a settings page which allows users to upload, update, and remove profile pictures which are stored using Supabase.
+- (Extra) Added CSS to the settings page as well as the focus goal form in focus sessions.
 
 ### Configuration
 
@@ -174,6 +183,13 @@ MOTIVATION_CACHE_TTL_MS=600000
 
 You should see the latest ZenQuotes entry rendered server-side along with a friendly aside that explains how the integration works.
 
+## Error Handling & Logging
+
+- Every controller logs the beginning/end of critical actions via `src/utils/logger.js`, including route context, user ids (when available), and error summaries.
+- Supabase and external API calls are wrapped in try/catch blocks inside the stores/services; failures are logged server-side and reported to users as friendly flash messages or inline validation errors (never raw stack traces).
+- The global Express error handler renders `views/error.ejs`, while route-level handlers fall back to safe redirects (e.g., `/focus`, `/auth/login`).
+- Settings uploads, session/goal creation, and authentication flows all include structured logging so we can trace issues in production.
+
 ## Live Timer & Polish (Deliverable 7)
 
 Week 13 turns the static Pomodoro mock-up into a working timer and finishes the UX polish required for the final showcase.
@@ -182,6 +198,7 @@ Week 13 turns the static Pomodoro mock-up into a working timer and finishes the 
 - Timer presets and queued sessions feed directly into the countdown. Switching presets or selecting a queued session updates the durations/cycle targets and resets the timer state.
 - Cycle metadata (“Cycle 2 of 4 · Break”) appears under the timer, and long breaks trigger automatically after the final cycle.
 - The settings page improvements from Deliverable 6 (avatar upload/remove) remain available and are now wired behind authenticated routes.
+- Added structured logging, controller comments, and expanded README guidance per the Deliverable 7 rubric.
 
 ### Verification Steps
 

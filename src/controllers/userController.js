@@ -12,6 +12,7 @@ const bcrypt = require('bcrypt');
 const userStore = require('../models/userStore');
 const { wantsJson } = require('../utils/requestFormat');
 const supabase = require('../lib/supabaseClient');
+const logger = require('../utils/logger');
 
 const BCRYPT_ROUNDS = Number.parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 12;
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'focusflow.sid';
@@ -198,6 +199,9 @@ async function createSupabaseAuthAccount({
     };
   }
 
+  logger.info('UserController#createSupabaseAuthAccount', 'Creating Supabase auth user', {
+    email: normalizedEmail,
+  });
   const { data, error } = await supabase.auth.admin.createUser({
     email: normalizedEmail,
     password,
@@ -217,11 +221,18 @@ async function createSupabaseAuthAccount({
         };
       }
     }
+    logger.error('UserController#createSupabaseAuthAccount', 'Supabase admin create failed', {
+      error: error.message,
+    });
     return { ok: false, error };
   }
 
   await sendVerificationInvite(normalizedEmail, redirectTo, {
     username: normalizedUsername,
+  });
+
+  logger.info('UserController#createSupabaseAuthAccount', 'Supabase auth user created', {
+    supabaseUserId: data?.user?.id,
   });
 
   return {
@@ -233,12 +244,19 @@ async function createSupabaseAuthAccount({
 
 async function fetchSupabaseAuthUser(user) {
   if (!user?.authUserId) return null;
+  logger.info('UserController#fetchSupabaseAuthUser', 'Fetching Supabase auth user', {
+    authUserId: user.authUserId,
+  });
   const { data, error } = await supabase.auth.admin.getUserById(
     user.authUserId
   );
   if (!error && data?.user) {
     return data.user;
   }
+  logger.warn('UserController#fetchSupabaseAuthUser', 'Could not load Supabase auth user', {
+    authUserId: user.authUserId,
+    error: error?.message,
+  });
   return null;
 }
 
@@ -261,6 +279,9 @@ async function ensureEmailVerified(user) {
   }
 
   await userStore.markEmailVerified(user.id, confirmedAt);
+  logger.info('UserController#ensureEmailVerified', 'Marked email verified', {
+    userId: user.id,
+  });
   return true;
 }
 
@@ -268,7 +289,14 @@ async function ensureEmailVerified(user) {
  * GET /users/register
  * Display registration form
  */
+/**
+ * Controller: getRegister
+ * Purpose: Render the registration page with blank values and CSRF token.
+ * Input: Express req/res.
+ * Output: auth/register view.
+ */
 exports.getRegister = (req, res) => {
+  logger.info('UserController#getRegister', 'Rendering registration page');
   res.render('auth/register', {
     title: 'Create Account',
     errors: {},
@@ -281,9 +309,19 @@ exports.getRegister = (req, res) => {
  * POST /users/register
  * Process registration form
  */
+/**
+ * Controller: postRegister
+ * Purpose: Validate input, create Supabase auth account, store local user, and prompt verification.
+ * Input: req.body (username, email, password, passwordConfirm).
+ * Output: Redirect/JSON with user + redirect path.
+ */
 exports.postRegister = async (req, res, next) => {
   try {
     const { username, email, password, passwordConfirm } = req.body;
+    logger.info('UserController#postRegister', 'Registration attempt', {
+      email,
+      username,
+    });
     const values = { username, email };
     const errors = buildRegisterErrors({
       username,
@@ -293,6 +331,9 @@ exports.postRegister = async (req, res, next) => {
     });
 
     if (Object.keys(errors).length > 0) {
+      logger.warn('UserController#postRegister', 'Validation failed before Supabase lookup', {
+        errors,
+      });
       return handleErrorResponse(req, res, 'auth/register', 422, {
         title: 'Create Account',
         errors,
@@ -313,6 +354,9 @@ exports.postRegister = async (req, res, next) => {
     }
 
     if (Object.keys(errors).length > 0) {
+      logger.warn('UserController#postRegister', 'Duplicate email or username detected', {
+        errors,
+      });
       return handleErrorResponse(req, res, 'auth/register', 422, {
         title: 'Create Account',
         errors,
@@ -343,6 +387,9 @@ exports.postRegister = async (req, res, next) => {
       ) {
         errors.email = 'That email is already registered.';
       }
+      logger.error('UserController#postRegister', 'Supabase admin create failed', {
+        error: supabaseAccount.error?.message,
+      });
       return handleErrorResponse(req, res, 'auth/register', 422, {
         title: 'Create Account',
         errors,
@@ -388,17 +435,27 @@ exports.postRegister = async (req, res, next) => {
       });
     }
 
+    logger.info('UserController#postRegister', 'Registration complete awaiting verification', {
+      email,
+      userId: result.user.id,
+    });
     return res.redirect('/auth/login');
   } catch (error) {
+    logger.error('UserController#postRegister', 'Unexpected error', {
+      error: error.message,
+    });
     next(error);
   }
 };
 
 /**
- * GET /users/login
- * Display login form
+ * Controller: getLogin
+ * Purpose: Render the login form for existing users.
+ * Input: Express req/res.
+ * Output: auth/login view.
  */
 exports.getLogin = (req, res) => {
+  logger.info('UserController#getLogin', 'Rendering login page');
   res.render('auth/login', {
     title: 'Log In',
     errors: {},
@@ -407,7 +464,14 @@ exports.getLogin = (req, res) => {
   });
 };
 
+/**
+ * Controller: getVerifyStatus
+ * Purpose: Display the verification landing page linked from Supabase emails.
+ * Input: Express req/res.
+ * Output: auth/verify view.
+ */
 exports.getVerifyStatus = (req, res) => {
+  logger.info('UserController#getVerifyStatus', 'Rendering verify status page');
   res.render('auth/verify', {
     title: 'Check your email',
     csrfToken: req.csrfToken(),
@@ -417,6 +481,12 @@ exports.getVerifyStatus = (req, res) => {
 /**
  * POST /users/login
  * Process login form
+ */
+/**
+ * Controller: postLogin
+ * Purpose: Authenticate user credentials and start a session.
+ * Input: req.body.email/password/rememberMe.
+ * Output: Redirect or JSON {user, redirectTo}.
  */
 exports.postLogin = async (req, res, next) => {
   try {
@@ -437,6 +507,7 @@ exports.postLogin = async (req, res, next) => {
     const user = await userStore.findByEmail(email);
     if (!user) {
       errors.form = 'Invalid email or password.';
+      logger.warn('UserController#postLogin', 'Email not found', { email });
       return handleErrorResponse(req, res, 'auth/login', 401, {
         title: 'Log In',
         errors,
@@ -447,6 +518,7 @@ exports.postLogin = async (req, res, next) => {
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatches) {
       errors.form = 'Invalid email or password.';
+      logger.warn('UserController#postLogin', 'Password mismatch', { email });
       return handleErrorResponse(req, res, 'auth/login', 401, {
         title: 'Log In',
         errors,
@@ -480,6 +552,11 @@ exports.postLogin = async (req, res, next) => {
     const redirectTo = req.session.redirectTo || '/focus';
     delete req.session.redirectTo;
 
+    logger.info('UserController#postLogin', 'Login successful', {
+      userId: user.id,
+      redirectTo,
+    });
+
     if (wantsJson(req)) {
       return res.status(200).json({
         ok: true,
@@ -490,19 +567,29 @@ exports.postLogin = async (req, res, next) => {
 
     return res.redirect(redirectTo);
   } catch (error) {
+    logger.error('UserController#postLogin', 'Unhandled error during login', {
+      error: error.message,
+    });
     next(error);
   }
 };
 
 /**
- * POST /users/logout
- * Logout user
+ * Controller: postLogout
+ * Purpose: Destroy the session and redirect or respond with JSON.
+ * Input: Express req/res.
+ * Output: Redirect to /auth/login or JSON {ok:true}.
  */
 exports.postLogout = (req, res) => {
   const respondJson = wantsJson(req);
+  logger.info('UserController#postLogout', 'Destroying session', {
+    userId: req.session.user?.id,
+  });
   req.session.destroy((err) => {
     if (err) {
-      console.error('Error destroying session:', err);
+      logger.error('UserController#postLogout', 'Failed to destroy session', {
+        error: err.message,
+      });
       res.clearCookie(SESSION_COOKIE_NAME);
       if (respondJson) {
         return res.status(500).json({ ok: false, error: 'LOGOUT_FAILED' });
@@ -513,8 +600,10 @@ exports.postLogout = (req, res) => {
 
     res.clearCookie(SESSION_COOKIE_NAME);
     if (respondJson) {
+      logger.info('UserController#postLogout', 'Logout complete (JSON response)');
       return res.json({ ok: true });
     }
+    logger.info('UserController#postLogout', 'Logout complete');
     return res.redirect('/');
   });
 };

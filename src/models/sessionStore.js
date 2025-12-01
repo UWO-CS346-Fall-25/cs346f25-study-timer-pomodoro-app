@@ -1,4 +1,5 @@
 const supabase = require('../lib/supabaseClient');
+const logger = require('../utils/logger');
 
 function mapRowToSession(row) {
   return {
@@ -42,19 +43,37 @@ async function listSessions(userId) {
     return [];
   }
 
-  const { data, error } = await supabase
-    .from('focus_sessions')
-    .select(
-      'id, title, focus_minutes, break_minutes, cycles, mood, created_at, user_id'
-    )
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  try {
+    logger.info('SessionStore.listSessions', 'Fetching focus sessions', { userId });
+    const { data, error } = await supabase
+      .from('focus_sessions')
+      .select(
+        'id, title, focus_minutes, break_minutes, cycles, mood, created_at, user_id'
+      )
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    throw new Error(`Failed to fetch focus sessions: ${error.message}`);
+    if (error) {
+      logger.error('SessionStore.listSessions', 'Supabase error', {
+        userId,
+        error: error.message,
+      });
+      throw new Error(`Failed to fetch focus sessions: ${error.message}`);
+    }
+
+    const mapped = (data || []).map(mapRowToSession);
+    logger.info('SessionStore.listSessions', 'Fetched focus sessions', {
+      userId,
+      count: mapped.length,
+    });
+    return mapped;
+  } catch (err) {
+    logger.error('SessionStore.listSessions', 'Unexpected failure', {
+      userId,
+      error: err.message,
+    });
+    throw err;
   }
-
-  return (data || []).map(mapRowToSession);
 }
 
 async function addSession(userId, input) {
@@ -100,20 +119,40 @@ async function addSession(userId, input) {
     user_id: userId,
   };
 
-  const { data, error } = await supabase
-    .from('focus_sessions')
-    .insert(payload)
-    .select()
-    .single();
+  try {
+    logger.info('SessionStore.addSession', 'Persisting focus session', {
+      userId,
+      payload: { ...payload, mood: payload.mood },
+    });
+    const { data, error } = await supabase
+      .from('focus_sessions')
+      .insert(payload)
+      .select()
+      .single();
 
-  if (error) {
-    throw new Error(`Failed to save focus session: ${error.message}`);
+    if (error) {
+      logger.error('SessionStore.addSession', 'Supabase insert failed', {
+        userId,
+        error: error.message,
+      });
+      throw new Error(`Failed to save focus session: ${error.message}`);
+    }
+
+    logger.info('SessionStore.addSession', 'Focus session stored', {
+      userId,
+      sessionId: data.id,
+    });
+    return {
+      ok: true,
+      session: mapRowToSession(data),
+    };
+  } catch (err) {
+    logger.error('SessionStore.addSession', 'Unexpected failure', {
+      userId,
+      error: err.message,
+    });
+    throw err;
   }
-
-  return {
-    ok: true,
-    session: mapRowToSession(data),
-  };
 }
 
 async function getSummaryForUser(userId) {

@@ -1,4 +1,5 @@
 const supabase = require('../lib/supabaseClient');
+const logger = require('../utils/logger');
 
 function mapRow(row) {
   if (!row) return null;
@@ -20,51 +21,72 @@ async function findByEmail(email) {
   const normalized = (email || '').trim();
   if (!normalized) return null;
 
-  const { data, error } = await supabase
-    .from('focus_users')
-    .select('*')
-    .eq('email', normalized)
-    .limit(1)
-    .single();
+  try {
+    logger.info('UserStore.findByEmail', 'Fetching user by email', { email: normalized });
+    const { data, error } = await supabase
+      .from('focus_users')
+      .select('*')
+      .eq('email', normalized)
+      .limit(1)
+      .single();
 
-  if (error && error.code !== 'PGRST116') {
-    throw new Error(`Failed to find user by email: ${error.message}`);
+    if (error && error.code !== 'PGRST116') {
+      logger.error('UserStore.findByEmail', 'Supabase error', { error: error.message });
+      throw new Error(`Failed to find user by email: ${error.message}`);
+    }
+
+    return mapRow(data);
+  } catch (err) {
+    logger.error('UserStore.findByEmail', 'Unexpected failure', { error: err.message });
+    throw err;
   }
-
-  return mapRow(data);
 }
 
 async function findByUsername(username) {
   const normalized = (username || '').trim();
   if (!normalized) return null;
 
-  const { data, error } = await supabase
-    .from('focus_users')
-    .select('*')
-    .eq('username', normalized)
-    .limit(1)
-    .single();
+  try {
+    logger.info('UserStore.findByUsername', 'Fetching user by username', { username: normalized });
+    const { data, error } = await supabase
+      .from('focus_users')
+      .select('*')
+      .eq('username', normalized)
+      .limit(1)
+      .single();
 
-  if (error && error.code !== 'PGRST116') {
-    throw new Error(`Failed to find user by username: ${error.message}`);
+    if (error && error.code !== 'PGRST116') {
+      logger.error('UserStore.findByUsername', 'Supabase error', { error: error.message });
+      throw new Error(`Failed to find user by username: ${error.message}`);
+    }
+
+    return mapRow(data);
+  } catch (err) {
+    logger.error('UserStore.findByUsername', 'Unexpected failure', { error: err.message });
+    throw err;
   }
-
-  return mapRow(data);
 }
 
 async function findById(id) {
-  const { data, error } = await supabase
-    .from('focus_users')
-    .select('*')
-    .eq('id', id)
-    .limit(1)
-    .single();
+  try {
+    logger.info('UserStore.findById', 'Fetching user by id', { id });
+    const { data, error } = await supabase
+      .from('focus_users')
+      .select('*')
+      .eq('id', id)
+      .limit(1)
+      .single();
 
-  if (error && error.code !== 'PGRST116') {
-    throw new Error(`Failed to find user by id: ${error.message}`);
+    if (error && error.code !== 'PGRST116') {
+      logger.error('UserStore.findById', 'Supabase error', { error: error.message });
+      throw new Error(`Failed to find user by id: ${error.message}`);
+    }
+
+    return mapRow(data);
+  } catch (err) {
+    logger.error('UserStore.findById', 'Unexpected failure', { error: err.message });
+    throw err;
   }
-
-  return mapRow(data);
 }
 
 async function createUser({ username, email, passwordHash, authUserId = null }) {
@@ -78,75 +100,112 @@ async function createUser({ username, email, passwordHash, authUserId = null }) 
     auth_user_id: authUserId,
   };
 
-  const { data, error } = await supabase
-    .from('focus_users')
-    .insert(payload)
-    .select('*')
-    .single();
+  try {
+    logger.info('UserStore.createUser', 'Persisting new user', {
+      username: trimmedUsername,
+      email: trimmedEmail,
+    });
+    const { data, error } = await supabase
+      .from('focus_users')
+      .insert(payload)
+      .select('*')
+      .single();
 
-  if (error) {
-    if (error.code === '23505') {
-      const detail = error.details || '';
-      if (detail.includes('username')) {
-        return { ok: false, reason: 'USERNAME_TAKEN' };
+    if (error) {
+      if (error.code === '23505') {
+        const detail = error.details || '';
+        if (detail.includes('username')) {
+          logger.warn('UserStore.createUser', 'Username taken', { username: trimmedUsername });
+          return { ok: false, reason: 'USERNAME_TAKEN' };
+        }
+        if (detail.includes('email')) {
+          logger.warn('UserStore.createUser', 'Email taken', { email: trimmedEmail });
+          return { ok: false, reason: 'EMAIL_TAKEN' };
+        }
+        return { ok: false, reason: 'DUPLICATE_VALUE' };
       }
-      if (detail.includes('email')) {
-        return { ok: false, reason: 'EMAIL_TAKEN' };
-      }
-      return { ok: false, reason: 'DUPLICATE_VALUE' };
+      logger.error('UserStore.createUser', 'Supabase insert failed', { error: error.message });
+      throw new Error(`Failed to create user: ${error.message}`);
     }
-    throw new Error(`Failed to create user: ${error.message}`);
-  }
 
-  return {
-    ok: true,
-    user: mapRow(data),
-  };
+    logger.info('UserStore.createUser', 'User stored', { id: data.id });
+    return {
+      ok: true,
+      user: mapRow(data),
+    };
+  } catch (err) {
+    logger.error('UserStore.createUser', 'Unexpected failure', { error: err.message });
+    throw err;
+  }
 }
 
 async function updateLastLogin(id) {
-  const { data, error } = await supabase
-    .from('focus_users')
-    .update({ last_login_at: new Date().toISOString() })
-    .eq('id', id)
-    .select('*')
-    .single();
+  try {
+    const payload = { last_login_at: new Date().toISOString() };
+    logger.info('UserStore.updateLastLogin', 'Updating last login', { id });
+    const { data, error } = await supabase
+      .from('focus_users')
+      .update(payload)
+      .eq('id', id)
+      .select('*')
+      .single();
 
-  if (error) {
-    throw new Error(`Failed to update last login: ${error.message}`);
+    if (error) {
+      logger.error('UserStore.updateLastLogin', 'Supabase error', { error: error.message });
+      throw new Error(`Failed to update last login: ${error.message}`);
+    }
+
+    return mapRow(data);
+  } catch (err) {
+    logger.error('UserStore.updateLastLogin', 'Unexpected failure', { error: err.message });
+    throw err;
   }
-
-  return mapRow(data);
 }
 
 async function markEmailVerified(id, timestamp) {
-  const { data, error } = await supabase
-    .from('focus_users')
-    .update({ email_verified_at: timestamp })
-    .eq('id', id)
-    .select('*')
-    .single();
+  try {
+    logger.info('UserStore.markEmailVerified', 'Marking email verified', { id });
+    const { data, error } = await supabase
+      .from('focus_users')
+      .update({ email_verified_at: timestamp })
+      .eq('id', id)
+      .select('*')
+      .single();
 
-  if (error) {
-    throw new Error(`Failed to mark email verified: ${error.message}`);
+    if (error) {
+      logger.error('UserStore.markEmailVerified', 'Supabase error', {
+        error: error.message,
+      });
+      throw new Error(`Failed to mark email verified: ${error.message}`);
+    }
+
+    return mapRow(data);
+  } catch (err) {
+    logger.error('UserStore.markEmailVerified', 'Unexpected failure', { error: err.message });
+    throw err;
   }
-
-  return mapRow(data);
 }
 
 async function updateUser(id, data) {
-  const { data: updated, error } = await supabase
-    .from('focus_users')
-    .update(data)
-    .eq('id', id)
-    .select('*')
-    .single();
+  try {
+    logger.info('UserStore.updateUser', 'Updating user', { id });
+    const { data: updated, error } = await supabase
+      .from('focus_users')
+      .update(data)
+      .eq('id', id)
+      .select('*')
+      .single();
 
-  if (error) {
-    throw new Error(`Failed to update user: ${error.message}`);
+    if (error) {
+      logger.error('UserStore.updateUser', 'Supabase error', { error: error.message });
+      throw new Error(`Failed to update user: ${error.message}`);
+    }
+
+    return mapRow(updated);
+  } catch (err) {
+    logger.error('UserStore.updateUser', 'Unexpected failure', { error: err.message });
+    throw err;
   }
-
-  return mapRow(updated);
 }
 
 module.exports = {

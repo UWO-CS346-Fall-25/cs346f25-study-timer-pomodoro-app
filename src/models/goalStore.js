@@ -1,4 +1,5 @@
 const supabase = require('../lib/supabaseClient');
+const logger = require('../utils/logger');
 
 const PRIORITY_LEVELS = ['High', 'Medium', 'Low'];
 
@@ -49,19 +50,37 @@ async function listGoals(userId) {
     return [];
   }
 
-  const { data, error } = await supabase
-    .from('focus_goals')
-    .select(
-      'id, title, target_focus_minutes, priority, due_date, set_reminder, notes, created_at'
-    )
-    .eq('user_id', userId)
-    .order('due_date', { ascending: true });
+  try {
+    logger.info('GoalStore.listGoals', 'Fetching goals', { userId });
+    const { data, error } = await supabase
+      .from('focus_goals')
+      .select(
+        'id, title, target_focus_minutes, priority, due_date, set_reminder, notes, created_at'
+      )
+      .eq('user_id', userId)
+      .order('due_date', { ascending: true });
 
-  if (error) {
-    throw new Error(`Failed to fetch focus goals: ${error.message}`);
+    if (error) {
+      logger.error('GoalStore.listGoals', 'Supabase error', {
+        userId,
+        error: error.message,
+      });
+      throw new Error(`Failed to fetch focus goals: ${error.message}`);
+    }
+
+    const mapped = (data || []).map(mapRowToGoal);
+    logger.info('GoalStore.listGoals', 'Goals fetched', {
+      userId,
+      count: mapped.length,
+    });
+    return mapped;
+  } catch (err) {
+    logger.error('GoalStore.listGoals', 'Unexpected failure', {
+      userId,
+      error: err.message,
+    });
+    throw err;
   }
-
-  return (data || []).map(mapRowToGoal);
 }
 
 async function addGoal(userId, input) {
@@ -118,20 +137,43 @@ async function addGoal(userId, input) {
     user_id: userId,
   };
 
-  const { data, error } = await supabase
-    .from('focus_goals')
-    .insert(payload)
-    .select()
-    .single();
+  try {
+    logger.info('GoalStore.addGoal', 'Persisting goal', {
+      userId,
+      payload: {
+        ...payload,
+        notes: payload.notes,
+      },
+    });
+    const { data, error } = await supabase
+      .from('focus_goals')
+      .insert(payload)
+      .select()
+      .single();
 
-  if (error) {
-    throw new Error(`Failed to save goal: ${error.message}`);
+    if (error) {
+      logger.error('GoalStore.addGoal', 'Supabase insert failed', {
+        userId,
+        error: error.message,
+      });
+      throw new Error(`Failed to save goal: ${error.message}`);
+    }
+
+    logger.info('GoalStore.addGoal', 'Goal stored', {
+      userId,
+      goalId: data.id,
+    });
+    return {
+      ok: true,
+      goal: mapRowToGoal(data),
+    };
+  } catch (err) {
+    logger.error('GoalStore.addGoal', 'Unexpected failure', {
+      userId,
+      error: err.message,
+    });
+    throw err;
   }
-
-  return {
-    ok: true,
-    goal: mapRowToGoal(data),
-  };
 }
 
 async function getSnapshot(userId) {
