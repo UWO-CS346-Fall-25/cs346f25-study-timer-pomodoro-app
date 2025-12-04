@@ -1389,6 +1389,16 @@ body.theme-lightning .site-footer,
   font-size: 0.9rem;
 }
 
+.page-motivation {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-motivation main {
+  flex: 1;
+}
+
 /* --------------------------------------------- */
 /* Error Page                                    */
 /* --------------------------------------------- */
