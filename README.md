@@ -1,6 +1,8 @@
 # FocusFlow Study Timer App
 
-FocusFlow is our CS346 semester project for building a study timer web application with Node.js, Express, EJS, and PostgreSQL.
+## 1. Project Overview
+
+FocusFlow is a study timer web application built as our CS346 semester project. Its purpose is to help students structure their study habits using a Pomodoro-style workflow. The app allows users to launch customizable focus sessions, schedule multiple study intervals, track long-term progress, and stay motivated with dynamic quotes. With features like authentication, a real-time browser timer, database-backed session history, and a settings page for personalizing profile pictures, FocusFlow provides a polished and practical tool for productivity.
 
 ## Features
 
@@ -11,7 +13,27 @@ FocusFlow is our CS346 semester project for building a study timer web applicati
 - 📝 **Clean Code** - ESLint, Prettier, best practices
 - 🎓 **Educational** - Well-documented, instructional code
 
-## Quick Start
+## 2. Technical Architecture
+
+### What MVC Is
+FocusFlow follows the MVC (Model–View–Controller) architectural pattern:
+- **Models** handle data storage and retrieval from Supabase/PostgreSQL.
+- **Views** are EJS templates that generate the HTML shown in the browser.
+- **Controllers** process incoming requests, validate inputs, call model functions, manage errors, and return the correct response.
+
+### How FocusFlow Uses MVC
+- The **models** (`sessionStore`, `goalStore`, `userStore`, etc.) wrap all Supabase database operations.
+- The **controllers** (such as `userController`, `motivationController`, `settingsController`) implement the application logic for authentication, focus sessions, avatar uploads, API fetches, and error handling.
+- The **views** render pages like Focus Sessions, Insights, Motivation, Settings, Login, and Register.
+
+### Request Flow: Route → Controller → View
+1. A route receives a request (e.g., `POST /focus/sessions`).
+2. The controller validates input and calls the appropriate model.
+3. The model interacts with Supabase and returns results.
+4. The controller formats the data, handles errors, and prepares view variables.
+5. The view (EJS) renders the final HTML response to the user.
+
+## 3. Local Setup Instructions
 
 1. **Clone the repository**
 
@@ -58,7 +80,28 @@ FocusFlow is our CS346 semester project for building a study timer web applicati
    http://localhost:3000
    ```
 
-## Current Pages (Deliverable 1)
+## 4. Error Handling
+
+FocusFlow includes error handling across all major systems to prevent crashes and provide a smooth user experience.
+
+### Expected Error Types
+- Database connection failures (Supabase offline or unreachable)
+- External API failures (ZenQuotes rate limit or network issues)
+- Invalid or missing user input during authentication and form submissions
+- CSRF token mismatches
+- Avatar upload or delete failures
+- Network disconnects during requests
+
+### How Errors Are Handled
+- All database and API operations are wrapped in `try/catch` blocks inside controllers and services.
+- Controllers return user-friendly flash messages or fallback content instead of exposing stack traces.
+- Motivation page falls back to the most recently cached quote if the external API fails.
+- Authentication errors redirect with clear explanations instead of breaking the session.
+- Settings actions (upload/update/remove avatar) show success/failure messages without interrupting the page flow.
+- The application never crashes on runtime errors — all failures are gracefully recovered.
+
+
+## 5. Changelog –  (Deliverable 1)
 
 The Week 7 HTML/CSS deliverable focuses on the static structure of the FocusFlow study timer. The Express app now serves four EJS pages with shared navigation and footer:
 
@@ -69,7 +112,7 @@ The Week 7 HTML/CSS deliverable focuses on the static structure of the FocusFlow
 
 All pages share the new FocusFlow color palette and component styles, including background colors and interactive button states defined in `src/public/css/style.css`. Content remains static by design; JavaScript logic and data integration will arrive later.
 
-## Current Pages (Deliverable 2)
+## Changelog –  (Deliverable 2)
 
 Week 8 focuses on the interactive Focus Sessions flow and basic server logic.
 
@@ -84,7 +127,7 @@ Week 8 focuses on the interactive Focus Sessions flow and basic server logic.
   - Show inline success/error states with keyboard-friendly controls.
   - Polish styling/animations so interactions feel smooth.
 
-## Current Pages (Deliverable 3)
+## Changelog –  (Deliverable 3)
 
 Week 9 focuses on front-end polish, form design, and usability improvements.
 
@@ -93,13 +136,11 @@ Week 9 focuses on front-end polish, form design, and usability improvements.
 - Routes/controllers already capture submissions and return JSON (`src/controllers/indexController.js`).
 - Base UI has gradients, active states, and responsive grids from Deliverable 2 (`src/public/css/style.css`).
 
-## Split
 **Ab**
 - Keep `feature/week9-ui-enhancements` in sync with `main`
 - Build the goal endpoints (`POST /focus/goals`, `/api/goals`) plus the supporting model `src/models/goalStore.js`; continue to expose any extra data modifications Dasha needs.
 - Wire any additional template placeholders or partials needed for the UI polish (e.g., hero copy, modals) and keep MVC tidy.
 - Refresh README once Dasha finishes visuals and drop the proof assets into `docs/` before the PR.
-
 **Dasha**
 - Does the front-end polish: integrate the selected UI improvements (animations, spacing, responsive adjustments) in `src/public/css/style.css` and `src/public/js/main.js`.
 - Pull in Lucide icons and Toastify (or the final two choices) and apply them to the focus/insights pages.
@@ -116,7 +157,7 @@ Week 9 focuses on front-end polish, form design, and usability improvements.
 ![Lucide Icons](lucideIconExample.png)
 ![Lucide Icons](lucidIconExample2.png)
 
-## Current Pages (Deliverable 4)
+## Changelog –  (Deliverable 4)
 
 Week 10 introduces Supabase-backed persistence so the Focus page forms now read/write real data.
 
@@ -124,7 +165,7 @@ Week 10 introduces Supabase-backed persistence so the Focus page forms now read/
 - **Repositories** – The in-memory stores were replaced with Supabase repositories (`src/models/sessionStore.js`, `src/models/goalStore.js`). Controllers now `await` the DB results and build summaries/snapshots from live rows.
 - **Forms and APIs** – `/focus/sessions` and `/focus/goals` POST endpoints persist data to Supabase; `/api/sessions` and `/api/goals` stream JSON for the AJAX refresh. Toastify toasts and empty-state messaging now reflect DB current state and results.
 
-## Current Pages (Deliverable 5)
+## Changelog –  (Deliverable 5)
 
 Week 11 brings full authentication and session workflows.
 
@@ -144,7 +185,7 @@ Week 11 brings full authentication and session workflows.
 5. Log in again with and without “Remember Me” checked; the cookie max-age should be 24 hours vs. ~30 days, and `/insights` + `/api/*` should show only your own data.
 6. (Optional) Hit `/api/sessions` with `fetch` while logged out to confirm it returns a `401 AUTH_REQUIRED` JSON payload from the middleware.
 
-## External API Integration (Deliverable 6)
+## Changelog – External API Integration (Deliverable 6)
 
 Week 12 adds a server-side integration with the [ZenQuotes](https://zenquotes.io/) REST API so students can pull a motivational quote before starting a focus sprint.
 
@@ -174,7 +215,7 @@ MOTIVATION_CACHE_TTL_MS=600000
 
 You should see the latest ZenQuotes entry rendered server-side along with a friendly aside that explains how the integration works.
 
-## Live Timer & Polish (Deliverable 7)
+## Changelog – Live Timer & Polish (Deliverable 7)
 
 Week 13 turns the static Pomodoro mock-up into a working timer and finishes the UX polish required for the final showcase.
 
@@ -182,6 +223,9 @@ Week 13 turns the static Pomodoro mock-up into a working timer and finishes the 
 - Timer presets and queued sessions feed directly into the countdown. Switching presets or selecting a queued session updates the durations/cycle targets and resets the timer state.
 - Cycle metadata (“Cycle 2 of 4 · Break”) appears under the timer, and long breaks trigger automatically after the final cycle.
 - The settings page improvements from Deliverable 6 (avatar upload/remove) remain available and are now wired behind authenticated routes.
+- Added robust error handling and offline fallback behavior to the Motivation page, ensuring cached quotes are used when the ZenQuotes API fails or the network is unavailable.
+- Added descriptive comments across all controllers (`userController.js`, `motivationController.js`, `settingsController.js`, `indexController.js`, and session-related controllers) documenting validation logic, error handling paths, and controller-to-model data flow.
+
 
 ### Verification Steps
 
