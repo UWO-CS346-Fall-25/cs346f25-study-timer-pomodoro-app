@@ -377,10 +377,232 @@ function initInteractiveElements() {
     return;
   }
 
+  const timerLabel =
+    document.getElementById('timerLabel') ||
+    document.querySelector('.timer-label');
   const focusInput = document.getElementById('focusMinutes');
   const breakInput = document.getElementById('breakMinutes');
   const cyclesInput = document.getElementById('cycles');
   const titleInput = document.getElementById('title');
+  const K = STORAGE_KEYS;
+  const MAX_CYCLES = 8;
+
+  let cycleStatusEl = document.getElementById('cycleStatus');
+  if (!cycleStatusEl && timerLabel) {
+    cycleStatusEl = document.createElement('p');
+    cycleStatusEl.id = 'cycleStatus';
+    cycleStatusEl.className = 'cycle-status';
+    timerLabel.insertAdjacentElement('afterend', cycleStatusEl);
+  }
+
+  const timerState = {
+    interval: 'focus',
+    status: 'idle',
+    completedCycles: 0,
+    totalCycles: 1,
+  };
+
+  let timerInterval = null;
+  let remainingSeconds = 0;
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function updateDisplay() {
+    display.textContent = formatTime(remainingSeconds);
+  }
+
+  function clearActiveTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+
+  function clampCycleCount(value) {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      return 1;
+    }
+    return Math.max(1, Math.min(parsed, MAX_CYCLES));
+  }
+
+  function readCycleTarget() {
+    if (cyclesInput) {
+      const fromInput = clampCycleCount(cyclesInput.value);
+      if (fromInput) return fromInput;
+    }
+    try {
+      const stored = JSON.parse(localStorage.getItem(K.custom) || 'null');
+      if (stored?.cycles) {
+        return clampCycleCount(stored.cycles);
+      }
+    } catch (err) {
+      console.warn('Unable to parse stored custom session', err);
+    }
+    return 1;
+  }
+
+  function updateCycleStatus() {
+    if (!cycleStatusEl) return;
+    const labels = {
+      focus: 'Focus',
+      break: 'Break',
+      long: 'Long Break',
+    };
+    const total = Math.max(timerState.totalCycles || 1, 1);
+    const activeCycle =
+      timerState.interval === 'focus'
+        ? timerState.completedCycles + 1
+        : timerState.completedCycles || 0;
+    const safeCurrent = Math.min(Math.max(activeCycle, 1), total);
+    cycleStatusEl.textContent = `Cycle ${safeCurrent} of ${total} · ${
+      labels[timerState.interval] || 'Focus'
+    }`;
+  }
+
+  function syncCycleTarget(resetProgress = true) {
+    timerState.totalCycles = readCycleTarget();
+    if (resetProgress) {
+      timerState.completedCycles = 0;
+    }
+    updateCycleStatus();
+  }
+
+  function transitionTo(which, autoStart = true) {
+    setActiveInterval(which);
+    const mins = minutesFor(which);
+    remainingSeconds = mins * 60;
+    updateDisplay();
+    timerState.status = 'idle';
+    if (autoStart) {
+      startTimer();
+    }
+  }
+
+  function handleIntervalComplete() {
+    clearActiveTimer();
+    timerState.status = 'idle';
+    const finished = timerState.interval;
+
+    if (finished === 'focus') {
+      timerState.completedCycles = Math.min(
+        timerState.completedCycles + 1,
+        timerState.totalCycles
+      );
+      updateCycleStatus();
+      const finishedAll = timerState.completedCycles >= timerState.totalCycles;
+      if (finishedAll) {
+        if (window.NotificationCenter) {
+          NotificationCenter.show(
+            'All scheduled focus cycles are complete. Enjoy a long break!',
+            'success'
+          );
+        }
+        transitionTo('long', true);
+        return;
+      }
+      if (window.NotificationCenter) {
+        NotificationCenter.show('Focus block complete. Break time!', 'info');
+      }
+      transitionTo('break', true);
+      return;
+    }
+
+    if (finished === 'break') {
+      if (window.NotificationCenter) {
+        NotificationCenter.show('Break finished. Back to focus!', 'success');
+      }
+      transitionTo('focus', true);
+      return;
+    }
+
+    if (finished === 'long') {
+      timerState.completedCycles = 0;
+      updateCycleStatus();
+      if (window.NotificationCenter) {
+        NotificationCenter.show(
+          'Long break finished. Ready for a new cycle.',
+          'info'
+        );
+      }
+      setActiveInterval('focus');
+      resetTimer(minutesFor('focus'), { resetCycles: true });
+    }
+  }
+
+  function startTimer() {
+    if (timerInterval) return;
+    if (remainingSeconds <= 0) {
+      remainingSeconds = minutesFor(timerState.interval) * 60;
+      updateDisplay();
+    }
+    timerInterval = setInterval(() => {
+      remainingSeconds -= 1;
+      if (remainingSeconds <= 0) {
+        remainingSeconds = 0;
+        updateDisplay();
+        handleIntervalComplete();
+        return;
+      }
+      updateDisplay();
+    }, 1000);
+    timerState.status = 'running';
+  }
+
+  function pauseTimer() {
+    clearActiveTimer();
+    timerState.status = 'paused';
+  }
+
+  function resetTimer(defaultMinutes, options = {}) {
+    clearActiveTimer();
+    remainingSeconds = defaultMinutes * 60;
+    timerState.status = 'idle';
+    if (options.resetCycles) {
+      timerState.completedCycles = 0;
+    }
+    updateDisplay();
+    updateCycleStatus();
+  }
+
+  const startBtn = document.querySelector(
+    '.timer-controls button:nth-child(1)'
+  );
+  const pauseBtn = document.querySelector(
+    '.timer-controls button:nth-child(2)'
+  );
+  const resetBtn = document.querySelector(
+    '.timer-controls button:nth-child(3)'
+  );
+
+  function currentIntervalType() {
+    return timerState.interval;
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (remainingSeconds <= 0) {
+      const min = minutesFor(timerState.interval);
+      remainingSeconds = min * 60;
+      updateDisplay();
+    }
+    startTimer();
+  });
+
+  pauseBtn.addEventListener('click', () => {
+    pauseTimer();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    setActiveInterval('focus');
+    const min = minutesFor('focus');
+    resetTimer(min, { resetCycles: true });
+  });
 
   function triggerThemeSweep() {
     body.classList.add('animate-bg');
@@ -401,7 +623,6 @@ function initInteractiveElements() {
     });
   });
 
-  const K = STORAGE_KEYS;
   const presetChips = document.querySelectorAll('.preset-panel .chip');
 
   const getCustomSession = () => {
@@ -417,10 +638,11 @@ function initInteractiveElements() {
       title: titleInput?.value || 'Session',
       focus: parseInt(focusInput?.value, 10) || 25,
       break: parseInt(breakInput?.value, 10) || 5,
-      cycles: parseInt(cyclesInput?.value, 10) || 1,
+      cycles: clampCycleCount(cyclesInput?.value || 1),
     };
     localStorage.setItem(K.mode, 'custom');
     localStorage.setItem(K.custom, JSON.stringify(payload));
+    syncCycleTarget(true);
   };
 
   presetChips.forEach((btn) => {
@@ -428,9 +650,14 @@ function initInteractiveElements() {
       if (focusInput) focusInput.value = btn.dataset.focus;
       if (breakInput) breakInput.value = btn.dataset.break;
       if (cyclesInput) cyclesInput.value = btn.dataset.cycles;
+      syncCycleTarget(true);
 
       const m = parseInt(btn.dataset.focus, 10) || 0;
       display.textContent = String(m).padStart(2, '0') + ':00';
+
+      pauseTimer();
+      remainingSeconds = m * 60;
+      updateDisplay();
 
       presetChips.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
@@ -503,9 +730,12 @@ function initInteractiveElements() {
 
   function setActiveInterval(which) {
     intervalBtns.forEach((b) => b.classList.remove('active'));
-    if (which === 'focus') focusBtn.classList.add('active');
-    if (which === 'break') breakBtn.classList.add('active');
-    if (which === 'long') longBreakBtn.classList.add('active');
+    if (which === 'focus') focusBtn?.classList.add('active');
+    if (which === 'break') breakBtn?.classList.add('active');
+    if (which === 'long') longBreakBtn?.classList.add('active');
+    timerState.interval = which;
+    localStorage.setItem(K.interval, which);
+    updateCycleStatus();
   }
 
   presetChips.forEach((btn) => {
@@ -521,21 +751,15 @@ function initInteractiveElements() {
   });
 
   focusBtn?.addEventListener('click', () => {
-    setTimer(minutesFor('focus'));
-    setActiveInterval('focus');
-    localStorage.setItem(K.interval, 'focus');
+    transitionTo('focus', false);
   });
 
   breakBtn?.addEventListener('click', () => {
-    setTimer(minutesFor('break'));
-    setActiveInterval('break');
-    localStorage.setItem(K.interval, 'break');
+    transitionTo('break', false);
   });
 
   longBreakBtn?.addEventListener('click', () => {
-    setTimer(minutesFor('long'));
-    setActiveInterval('long');
-    localStorage.setItem(K.interval, 'long');
+    transitionTo('long', false);
   });
 
   setTimer(minutesFor('focus'));
@@ -602,6 +826,7 @@ function initInteractiveElements() {
       setActiveInterval(savedInterval);
     }
   })();
+  syncCycleTarget(true);
 
   (function wireQueueClicks() {
     const list = document.getElementById('sessionList');
@@ -625,6 +850,7 @@ function initInteractiveElements() {
     const presetChips = document.querySelectorAll('.preset-panel .chip');
 
     function setFocusActive() {
+      setActiveInterval('focus');
       [chipFocus, chipBreak, chipLong].forEach((b) =>
         b?.classList.remove('active')
       );
@@ -647,6 +873,9 @@ function initInteractiveElements() {
       if (cyclesInput) cyclesInput.value = cycles;
 
       if (timerDisplay) timerDisplay.textContent = toMMSS(focusM);
+      remainingSeconds = focusM * 60;
+      updateDisplay();
+
       if (timerLabel) timerLabel.textContent = `Current interval: ${title}`;
 
       setFocusActive();
@@ -658,6 +887,7 @@ function initInteractiveElements() {
         K.custom,
         JSON.stringify({ title, focus: focusM, break: breakM, cycles })
       );
+      syncCycleTarget(true);
 
       const targetId =
         btn.dataset.sessionId || `${title}|${focusM}|${breakM}|${cycles}`;
@@ -782,6 +1012,8 @@ function initInteractiveElements() {
               cycles: session.cycles,
             })
           );
+          if (cyclesInput) cyclesInput.value = session.cycles;
+          syncCycleTarget(true);
           setCurrentSessionId(session.id);
         }
 

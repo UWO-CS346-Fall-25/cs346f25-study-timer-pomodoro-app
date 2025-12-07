@@ -21,6 +21,8 @@ const LONG_SESSION_MAX_AGE =
   Number.parseInt(process.env.SESSION_LONG_MAX_AGE, 10) ||
   DEFAULT_SESSION_MAX_AGE * 30;
 
+//  Helper functions
+
 function resolveAppBaseUrl(req) {
   const envBase = (process.env.APP_BASE_URL || '').trim();
   if (envBase) {
@@ -265,8 +267,10 @@ async function ensureEmailVerified(user) {
 }
 
 /**
- * GET /users/register
- * Display registration form
+ * Controller: getRegister
+ * Purpose: Display the registration page with empty form values.
+ * Input: req.csrfToken()
+ * Output: Renders "auth/register" view
  */
 exports.getRegister = (req, res) => {
   res.render('auth/register', {
@@ -278,8 +282,24 @@ exports.getRegister = (req, res) => {
 };
 
 /**
- * POST /users/register
- * Process registration form
+ * Controller: postRegister
+ * Purpose:
+ *   Handle full registration flow — validation, password hashing,
+ *   Supabase auth creation, local user creation, and redirect.
+ *
+ * Inputs:
+ *   - req.body.username, email, password, passwordConfirm
+ *
+ * Outputs:
+ *   - On success: redirect → /auth/login
+ *   - On JSON request: returns { ok: true, user, redirectTo }
+ *   - On error: re-render "auth/register" with validation errors
+ *
+ * Edge Cases:
+ *   - Email already exists
+ *   - Username taken
+ *   - Password mismatch
+ *   - Failure to send Supabase verification email
  */
 exports.postRegister = async (req, res, next) => {
   try {
@@ -395,8 +415,10 @@ exports.postRegister = async (req, res, next) => {
 };
 
 /**
- * GET /users/login
- * Display login form
+ * Controller: getLogin
+ * Purpose: Display login page with empty values and no errors.
+ * Input: req.csrfToken()
+ * Output: Renders "auth/login" view
  */
 exports.getLogin = (req, res) => {
   res.render('auth/login', {
@@ -407,6 +429,12 @@ exports.getLogin = (req, res) => {
   });
 };
 
+/**
+ * Controller: getVerifyStatus
+ * Purpose: Show "check your email" verification status.
+ * Input: req.csrfToken()
+ * Output: Renders "auth/verify"
+ */
 exports.getVerifyStatus = (req, res) => {
   res.render('auth/verify', {
     title: 'Check your email',
@@ -415,8 +443,24 @@ exports.getVerifyStatus = (req, res) => {
 };
 
 /**
- * POST /users/login
- * Process login form
+ * Controller: postLogin
+ * Purpose:
+ *   Authenticate user by email + password, verify email status,
+ *   establish session, optionally set long-lived cookie.
+ *
+ * Inputs:
+ *   - req.body.email, password, rememberMe
+ *
+ * Outputs:
+ *   - On success: redirect → previously intended page OR /focus
+ *   - On JSON request: { ok, user, redirectTo }
+ *   - On failure: re-render login with errors
+ *
+ * Edge cases:
+ *   - Incorrect password
+ *   - Email not found
+ *   - Email not verified yet
+ *   - Long session cookie
  */
 exports.postLogin = async (req, res, next) => {
   try {
@@ -495,8 +539,19 @@ exports.postLogin = async (req, res, next) => {
 };
 
 /**
- * POST /users/logout
- * Logout user
+ * Controller: postLogout
+ * Purpose:
+ *   Destroy session and clear cookie.
+ *
+ * Inputs:
+ *   - req.session
+ *
+ * Outputs:
+ *   - JSON: { ok: true } OR
+ *   - Redirect to "/" or "/auth/login"
+ *
+ * Edge cases:
+ *   - Session destruction failure
  */
 exports.postLogout = (req, res) => {
   const respondJson = wantsJson(req);
@@ -518,5 +573,3 @@ exports.postLogout = (req, res) => {
     return res.redirect('/');
   });
 };
-
-// Add more controller methods as needed

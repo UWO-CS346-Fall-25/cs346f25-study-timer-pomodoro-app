@@ -531,6 +531,10 @@ main.container,
 }
 
 .preset-name {
+  margin-right: 0.35rem;
+}
+
+.preset-name {
   font-weight: 600;
   color: var(--navy-900);
 }
@@ -1383,6 +1387,16 @@ body.theme-lightning .site-footer,
 
 .footer-note {
   font-size: 0.9rem;
+}
+
+.page-motivation {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-motivation main {
+  flex: 1;
 }
 
 /* --------------------------------------------- */
