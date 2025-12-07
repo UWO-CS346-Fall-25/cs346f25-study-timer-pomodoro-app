@@ -1,6 +1,35 @@
+/**
+ * Settings Controller
+ *
+ * Handles profile settings actions such as uploading or removing a user's
+ * avatar. All logic interacts with Supabase Storage and updates the user's
+ * database record accordingly.
+ */
+
 const supabase = require('../lib/supabaseClient');
 const userStore = require('../models/userStore');
 
+/**
+ * Controller: updateAvatar
+ * Purpose:
+ *    Upload a new profile picture to Supabase Storage, update the user's avatar
+ *    URL in the DB, and refresh the session to use the updated URL.
+ *
+ * Input:
+ *    - req.file: Uploaded image buffer, mimetype, filename (provided by multer)
+ *    - req.session.user: Current logged-in user object
+ *
+ * Output:
+ *    - JSON response:
+ *         { success: true, url: <freshUrl> }
+ *         { success: false, error: <reason> }
+ *
+ * Edge Cases:
+ *    - No authenticated user → return JSON error
+ *    - No file uploaded → return JSON error
+ *    - Supabase upload fails → return JSON error
+ *    - Cache-busting query param (?t=timestamp) ensures browser fetches new image
+ */
 exports.updateAvatar = async (req, res) => {
   console.log(
     `[${new Date().toISOString()}] [SettingsController] updateAvatar START`
@@ -53,6 +82,7 @@ exports.updateAvatar = async (req, res) => {
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
 
+    // Cache-busting ensures browser loads fresh image instead of cached old ones
     const freshUrl = `${data.publicUrl}?t=${Date.now()}`;
 
     console.log(
@@ -61,6 +91,7 @@ exports.updateAvatar = async (req, res) => {
 
     await userStore.updateUser(user.id, { avatar_url: freshUrl });
 
+    // Update session so page reflects new avatar immediately
     req.session.user.avatarUrl = freshUrl;
 
     console.log(
@@ -76,6 +107,22 @@ exports.updateAvatar = async (req, res) => {
   }
 };
 
+/**
+ * Controller: removeAvatar
+ * Purpose:
+ *    Remove the user's avatar by clearing the avatar_url column in the DB.
+ *    Does *not* delete the file from Supabase Storage, only detaches it from
+ *    the user's account.
+ *
+ * Input:
+ *    - req.session.user: Current logged-in user
+ *
+ * Output:
+ *    - Redirects back to /settings
+ *
+ * Edge Cases:
+ *    - If user not authenticated → redirect back without changes
+ */
 exports.removeAvatar = async (req, res) => {
   console.log(
     `[${new Date().toISOString()}] [SettingsController] removeAvatar START`

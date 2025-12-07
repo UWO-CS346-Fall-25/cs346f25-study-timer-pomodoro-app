@@ -11,9 +11,6 @@
  * - Handle errors appropriately
  */
 
-// Import models if needed
-// const SomeModel = require('../models/SomeModel');
-
 const sessionStore = require('../models/sessionStore');
 const goalStore = require('../models/goalStore');
 
@@ -83,6 +80,20 @@ const reflectionPrompts = [
 
 const teamMembers = [{ name: 'Ab Emmanuel' }, { name: 'Dasha Coates' }];
 
+/**
+ * Controller: getHome
+ * Purpose:
+ *    Render the homepage with static feature cards and workflow steps.
+ *
+ * Input:
+ *    - req.csrfToken()
+ *
+ * Output:
+ *    - Renders "index" EJS template
+ *
+ * Edge cases:
+ *    - If template rendering fails → forwarded to error middleware
+ */
 exports.getHome = async (req, res, next) => {
   console.log(`[${new Date().toISOString()}] [IndexController] getHome START`);
   try {
@@ -96,6 +107,7 @@ exports.getHome = async (req, res, next) => {
       workflowSteps,
       csrfToken: req.csrfToken(),
     });
+
     console.log(
       `[${new Date().toISOString()}] [IndexController] getHome SUCCESS`
     );
@@ -109,8 +121,13 @@ exports.getHome = async (req, res, next) => {
 };
 
 /**
- * GET /about
- * Display the about page
+ * Controller: getAbout
+ * Purpose:
+ *    Render the about page showing team members.
+ * Input:
+ *    - req.csrfToken()
+ * Output:
+ *    - Renders "about" EJS template
  */
 exports.getAbout = async (req, res, next) => {
   console.log(`[${new Date().toISOString()}] [IndexController] getAbout START`);
@@ -133,6 +150,23 @@ exports.getAbout = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: getFocus
+ * Purpose:
+ *    Render the Focus Planner page.
+ *    Pulls user sessions + goals, prepares summaries, and injects preset data.
+ *
+ * Input:
+ *    - req.session.user?.id (optional — user may not be logged in)
+ *    - res.locals.formValues / res.locals.formErrors (optional)
+ *    - req.csrfToken()
+ *
+ * Output:
+ *    - Renders "focus" EJS with sessions, goals, presets, and form state.
+ *
+ * Edge cases:
+ *    - If user is not logged in, stores may return empty arrays
+ */
 exports.getFocus = async (req, res, next) => {
   console.log(`[${new Date().toISOString()}] [IndexController] getFocus START`);
   try {
@@ -192,6 +226,22 @@ exports.getFocus = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: getInsights
+ * Purpose:
+ *    Render the Insights dashboard showing recent sessions, totals, mood records,
+ *    and reflection prompts.
+ *
+ * Input:
+ *    - req.session.user?.id
+ *    - req.csrfToken()
+ *
+ * Output:
+ *    - Renders "insights" EJS template
+ *
+ * Edge cases:
+ *    - If user has no sessions, summaries default safely
+ */
 exports.getInsights = async (req, res, next) => {
   console.log(
     `[${new Date().toISOString()}] [IndexController] getInsights START`
@@ -259,6 +309,24 @@ exports.getInsights = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: createSession
+ * Purpose:
+ *    Validate and create a new focus session.
+ *    Supports JSON (fetch) and standard form POST submission.
+ *
+ * Input:
+ *    - req.body (session fields)
+ *    - req.session.user?.id
+ *    - req.get('x-requested-with') / req.headers.accept → determines JSON mode
+ *
+ * Output:
+ *    - JSON: { ok, errors? } OR
+ *    - Redirect to /focus with flash messages
+ *
+ * Edge cases:
+ *    - Validation errors returned from sessionStore.addSession()
+ */
 exports.createSession = async (req, res, next) => {
   console.log(
     `[${new Date().toISOString()}] [IndexController] createSession START`
@@ -274,6 +342,7 @@ exports.createSession = async (req, res, next) => {
     );
     const result = await sessionStore.addSession(userId, req.body);
 
+    // Validation failed
     if (!result.ok) {
       console.warn(
         `[${new Date().toISOString()}] [IndexController] Session validation failed`
@@ -290,6 +359,7 @@ exports.createSession = async (req, res, next) => {
       return res.redirect('/focus');
     }
 
+    // Success
     req.session.flash = {
       type: 'success',
       heading: 'Session added to your queue.',
@@ -319,6 +389,17 @@ exports.createSession = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: getSessionsJson
+ * Purpose:
+ *    Provide session list + summary for front-end fetch requests.
+ *
+ * Input:
+ *    - req.session.user?.id
+ *
+ * Output:
+ *    - JSON { sessions, summary }
+ */
 exports.getSessionsJson = async (req, res, next) => {
   console.log(
     `[${new Date().toISOString()}] [IndexController] getSessionsJson START`
@@ -341,6 +422,21 @@ exports.getSessionsJson = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: createGoal
+ * Purpose:
+ *    Validate and create a new goal. Supports both JSON and form submissions.
+ *
+ * Input:
+ *    - req.body (goal fields)
+ *    - req.session.user?.id
+ *
+ * Output:
+ *    - JSON { ok, goal, goals, snapshot } OR redirect to /focus
+ *
+ * Edge cases:
+ *    - Validation errors from goalStore.addGoal()
+ */
 exports.createGoal = async (req, res, next) => {
   console.log(
     `[${new Date().toISOString()}] [IndexController] createGoal START`
@@ -402,6 +498,17 @@ exports.createGoal = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: getGoalsJson
+ * Purpose:
+ *    Return all goals + summary snapshot for front-end dynamic updates.
+ *
+ * Input:
+ *    - req.session.user?.id
+ *
+ * Output:
+ *    - JSON { goals, snapshot }
+ */
 exports.getGoalsJson = async (req, res, next) => {
   console.log(
     `[${new Date().toISOString()}] [IndexController] getGoalsJson START`
@@ -424,6 +531,17 @@ exports.getGoalsJson = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: getSettings
+ * Purpose:
+ *    Render the settings page.
+ *
+ * Input:
+ *    - req.csrfToken()
+ *
+ * Output:
+ *    - Renders "settings" EJS
+ */
 exports.getSettings = (req, res) => {
   console.log(
     `[${new Date().toISOString()}] [IndexController] getSettings START`
@@ -432,6 +550,7 @@ exports.getSettings = (req, res) => {
     title: 'Settings',
     csrfToken: req.csrfToken(),
   });
+
   console.log(
     `[${new Date().toISOString()}] [IndexController] getSettings SUCCESS`
   );
